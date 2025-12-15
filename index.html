@@ -152,11 +152,11 @@
     <div id="root"></div>
 
     <script type="text/babel" data-presets="react" data-type="module">
-      import React, { useState, useEffect } from "https://esm.sh/react@18.2.0";
+      import React, { useState, useEffect, useRef } from "https://esm.sh/react@18.2.0";
       import ReactDOM from "https://esm.sh/react-dom@18.2.0/client";
       import { 
         Copy, Share2, Plus, X, ChevronLeft, Image as ImageIcon, 
-        MoreHorizontal, Check, Pencil, Search, Sparkles, Loader2, AlertTriangle, Trash2
+        MoreHorizontal, Check, Pencil, Search, Sparkles, Loader2, AlertTriangle, Trash2, Upload, Link as LinkIcon
       } from "https://esm.sh/lucide-react@0.263.1";
       // Import Lenis (New Package Name)
       import Lenis from "https://esm.sh/lenis@1.1.14";
@@ -199,6 +199,25 @@
           throw error;
         }
         return data.map(mapFromDb);
+      };
+
+      const uploadImageToSupabase = async (file) => {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        // Upload to 'images' bucket
+        const { error: uploadError } = await supabase.storage
+          .from('images')
+          .upload(filePath, file);
+
+        if (uploadError) {
+          throw uploadError;
+        }
+
+        // Get public URL
+        const { data } = supabase.storage.from('images').getPublicUrl(filePath);
+        return data.publicUrl;
       };
 
       const savePromptToSupabase = async (prompt) => {
@@ -371,43 +390,77 @@
       const AddModal = ({ isOpen, onClose, onSave, onDelete, initialData }) => {
         const [title, setTitle] = useState('');
         const [prompt, setPrompt] = useState('');
+        const [imageMode, setImageMode] = useState('upload'); // 'link' or 'upload'
         const [imageUrl, setImageUrl] = useState('');
+        const [selectedFile, setSelectedFile] = useState(null);
+        const [previewUrl, setPreviewUrl] = useState('');
         const [category, setCategory] = useState('NanoBanana');
         const [isSaving, setIsSaving] = useState(false);
         const [isDeleting, setIsDeleting] = useState(false);
+        const fileInputRef = useRef(null);
 
         useEffect(() => {
           if (isOpen && initialData) {
             setTitle(initialData.title);
             setPrompt(initialData.prompt);
             setImageUrl(initialData.imageUrl);
+            setPreviewUrl(initialData.imageUrl);
+            setImageMode('link'); // Default to link when editing existing unless we want to replace
             setCategory(initialData.category || 'NanoBanana');
+            setSelectedFile(null);
           } else if (isOpen && !initialData) {
             setTitle('');
             setPrompt('');
             setImageUrl('');
+            setPreviewUrl('');
+            setImageMode('upload');
             setCategory('NanoBanana');
+            setSelectedFile(null);
           }
         }, [isOpen, initialData]);
+
+        const handleFileChange = (e) => {
+          const file = e.target.files[0];
+          if (file) {
+            setSelectedFile(file);
+            setPreviewUrl(URL.createObjectURL(file));
+          }
+        };
 
         if (!isOpen) return null;
 
         const handleSubmit = async (e) => {
           e.preventDefault();
           setIsSaving(true);
-          const newPrompt = {
-            id: initialData ? initialData.id : Date.now().toString(),
-            title,
-            prompt,
-            imageUrl: imageUrl || 'https://picsum.photos/800/1000',
-            category,
-            createdAt: initialData ? initialData.createdAt : Date.now()
-          };
+          
+          let finalImageUrl = imageUrl;
+
           try {
+            // Handle File Upload if mode is 'upload' and file selected
+            if (imageMode === 'upload' && selectedFile) {
+              finalImageUrl = await uploadImageToSupabase(selectedFile);
+            } else if (imageMode === 'upload' && !selectedFile && !initialData) {
+              // Fallback if adding new and no file selected
+              finalImageUrl = 'https://picsum.photos/800/1000'; 
+            } else if (imageMode === 'upload' && !selectedFile && initialData) {
+              // Keep existing if editing and no new file
+              finalImageUrl = initialData.imageUrl;
+            }
+
+            const newPrompt = {
+              id: initialData ? initialData.id : Date.now().toString(),
+              title,
+              prompt,
+              imageUrl: finalImageUrl || 'https://picsum.photos/800/1000',
+              category,
+              createdAt: initialData ? initialData.createdAt : Date.now()
+            };
+
             await onSave(newPrompt);
             onClose();
           } catch (err) {
-            alert("Failed to save. Please try again.");
+            console.error(err);
+            alert("Failed to save. If uploading, ensure 'images' bucket exists and is public in Supabase.");
           } finally {
             setIsSaving(false);
           }
@@ -431,7 +484,7 @@
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
-            <div className="glass-panel w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl p-6 md:p-8 relative animate-in fade-in zoom-in-95 duration-200">
+            <div data-lenis-prevent className="glass-panel w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl p-6 md:p-8 relative animate-in fade-in zoom-in-95 duration-200 overscroll-contain">
               <button onClick={onClose} className="absolute top-4 right-4 p-2 text-white/50 hover:text-white transition-colors z-10"><X size={24} /></button>
               <h2 className="text-xl md:text-2xl font-bold font-display mb-6 bg-gradient-to-r from-white to-white/50 bg-clip-text text-transparent">{initialData ? 'Edit Prompt' : 'Add to Vault'}</h2>
               <form onSubmit={handleSubmit} className="space-y-5 md:space-y-6">
@@ -455,7 +508,57 @@
                   </div>
                 </div>
 
-                <div className="space-y-2"><label className="text-sm text-white/60 font-medium ml-1">Image URL (4:5 Aspect Ratio)</label><input type="url" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://..." className="glass-input w-full rounded-xl px-4 py-3 focus:outline-none focus:border-[#5C5CFF]/50 transition-colors placeholder:text-white/20 appearance-none" /><p className="text-xs text-white/30 ml-1">Leave empty for a random placeholder.</p></div>
+                <div className="space-y-3">
+                  <label className="text-sm text-white/60 font-medium ml-1">Image (4:5 Aspect Ratio)</label>
+                  
+                  {/* Image Mode Toggles */}
+                  <div className="flex p-1 bg-white/5 rounded-xl border border-white/10 w-fit mb-2">
+                    <button type="button" onClick={() => setImageMode('upload')} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${imageMode === 'upload' ? 'bg-[#5C5CFF] text-white' : 'text-white/50 hover:text-white'}`}>
+                      <Upload size={14} /> Upload
+                    </button>
+                    <button type="button" onClick={() => setImageMode('link')} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${imageMode === 'link' ? 'bg-[#5C5CFF] text-white' : 'text-white/50 hover:text-white'}`}>
+                      <LinkIcon size={14} /> URL
+                    </button>
+                  </div>
+
+                  {imageMode === 'upload' ? (
+                     <div 
+                      onClick={() => fileInputRef.current?.click()}
+                      className="group relative w-full aspect-[4/5] max-h-[200px] rounded-xl border-2 border-dashed border-white/10 hover:border-[#5C5CFF]/50 bg-white/5 flex flex-col items-center justify-center cursor-pointer transition-all overflow-hidden"
+                    >
+                      {previewUrl ? (
+                        <>
+                          <img src={previewUrl} alt="Preview" className="w-full h-full object-cover opacity-60 group-hover:opacity-40 transition-opacity" />
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="bg-black/50 backdrop-blur px-3 py-1 rounded-full text-xs font-medium text-white opacity-0 group-hover:opacity-100 transition-opacity">Change Image</span>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="flex flex-col items-center gap-2 text-white/40 group-hover:text-[#5C5CFF] transition-colors">
+                           <Upload size={24} />
+                           <span className="text-xs font-bold uppercase tracking-wider">Click to Upload</span>
+                        </div>
+                      )}
+                      <input 
+                        ref={fileInputRef} 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        onChange={handleFileChange} 
+                      />
+                     </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <input type="url" value={imageUrl} onChange={(e) => { setImageUrl(e.target.value); setPreviewUrl(e.target.value); }} placeholder="https://..." className="glass-input w-full rounded-xl px-4 py-3 focus:outline-none focus:border-[#5C5CFF]/50 transition-colors placeholder:text-white/20 appearance-none" />
+                      {previewUrl && (
+                        <div className="w-20 h-24 rounded-lg overflow-hidden border border-white/10 bg-black/20">
+                          <img src={previewUrl} className="w-full h-full object-cover" onError={(e) => e.target.style.display='none'} />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
                 <div className="space-y-2"><label className="text-sm text-white/60 font-medium ml-1">Prompt</label><textarea required value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Describe your image generation prompt..." rows={5} className="glass-input w-full rounded-xl px-4 py-3 focus:outline-none focus:border-[#5C5CFF]/50 transition-colors placeholder:text-white/20 resize-none appearance-none" /></div>
                 
                 <div className="flex gap-3 mt-4">
@@ -465,7 +568,9 @@
                     </Button>
                   )}
                   <Button type="submit" fullWidth disabled={isSaving} className="shadow-lg shadow-[#5C5CFF]/20">
-                    {isSaving ? <Loader2 className="animate-spin" size={20} /> : (initialData ? 'Update Vault' : 'Save to Vault')}
+                    {isSaving ? (
+                      <div className="flex items-center gap-2"><Loader2 className="animate-spin" size={20} /> <span>{imageMode === 'upload' && selectedFile ? 'Uploading...' : 'Saving...'}</span></div>
+                    ) : (initialData ? 'Update Vault' : 'Save to Vault')}
                   </Button>
                 </div>
               </form>
@@ -542,7 +647,7 @@
                     </div>
                   </div>
                 </div>
-                <div className="relative glass-panel rounded-3xl p-6 mb-8 border border-white/10 bg-[#161616]/80 backdrop-blur-xl">
+                <div data-lenis-prevent className="relative glass-panel rounded-3xl p-6 mb-8 border border-white/10 bg-[#161616]/80 backdrop-blur-xl">
                   <div className="absolute right-3 top-3 bottom-3 w-1.5 bg-white/5 rounded-full overflow-hidden"><div className="w-full h-1/3 bg-white/20 rounded-full mt-2"></div></div>
                   <div className="pr-4 max-h-[200px] overflow-y-auto no-scrollbar text-sm leading-relaxed text-gray-300 font-medium whitespace-pre-wrap animate-text-reveal">{data.prompt}</div>
                 </div>
