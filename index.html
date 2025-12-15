@@ -584,6 +584,15 @@ grant all on table storage.objects to authenticated;
         const [copied, setCopied] = useState(false);
         const { addToast } = useToast();
 
+        const getDotColor = (c) => {
+          switch(c) {
+            case 'NanoBanana': return 'bg-[#FFD700] shadow-[0_0_8px_rgba(255,215,0,0.5)]';
+            case 'Midjourney': return 'bg-[#00BFFF] shadow-[0_0_8px_rgba(0,191,255,0.5)]';
+            case 'Seedream': return 'bg-[#00FA9A] shadow-[0_0_8px_rgba(0,250,154,0.5)]';
+            default: return 'bg-white';
+          }
+        };
+
         const handleCopy = () => {
           navigator.clipboard.writeText(data.prompt);
           setCopied(true);
@@ -633,22 +642,14 @@ grant all on table storage.objects to authenticated;
                    
                    {/* Meta Tags */}
                    <div className="flex flex-wrap items-center gap-3">
-                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 text-xs font-bold border border-white/5 text-white/90">
-                         <Sparkles size={12} className="text-[#5C5CFF]" />
-                         <span>{data.category || 'NanoBanana'}</span>
-                      </div>
-                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 text-xs font-bold border border-white/5 text-white/90">
-                         <Calendar size={12} />
-                         <span>{new Date(data.createdAt).toLocaleDateString()}</span>
+                      <div className="glass-element flex items-center gap-2 px-3 py-2 rounded-full border border-white/10">
+                         <div className={`w-2 h-2 rounded-full flex-shrink-0 ${getDotColor(data.category || 'NanoBanana')}`}></div>
+                         <span className="text-xs font-bold uppercase tracking-widest text-white/90 font-display whitespace-nowrap">{data.category || 'NanoBanana'}</span>
                       </div>
                    </div>
 
                    {/* Prompt Box */}
                    <div className="w-full bg-[#161616] border border-white/10 rounded-2xl p-5 md:p-6 mt-2 relative">
-                      <div className="absolute top-4 right-4 text-white/20">
-                         <Info size={16} />
-                      </div>
-                      <h3 className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-3">Generation Prompt</h3>
                       <p className="text-sm md:text-base text-gray-300 font-medium leading-relaxed whitespace-pre-wrap select-text">
                         {data.prompt}
                       </p>
@@ -661,9 +662,6 @@ grant all on table storage.objects to authenticated;
                 <div className="max-w-xl mx-auto flex gap-4">
                    <Button onClick={handleCopy} fullWidth variant="primary" className="h-14 text-base font-bold shadow-lg shadow-[#5C5CFF]/30 rounded-full hover:scale-[1.02] active:scale-95 transition-transform">
                       {copied ? 'Copied!' : 'Copy prompt'}
-                   </Button>
-                   <Button onClick={handleShare} fullWidth variant="secondary" className="h-14 text-base font-bold rounded-full hover:scale-[1.02] active:scale-95 transition-transform">
-                      Share style
                    </Button>
                 </div>
              </div>
