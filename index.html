@@ -240,7 +240,7 @@ grant all on table storage.objects to authenticated;
                       : 'bg-[#1a1a1a]/90 border-white/10 text-white'
                   }`}
                 >
-                  <div className={`shrink-0 ${toast.type === 'error' ? 'text-red-400' : 'text-[#5C5CFF]'}`}>
+                  <div className={`shrink-0 ${toast.type === 'error' ? 'text-red-400' : 'text-[#326EC4]'}`}>
                     {toast.type === 'error' ? <XCircle size={20} /> : <CheckCircle2 size={20} />}
                   </div>
                   <p className="text-sm font-medium leading-tight">{toast.message}</p>
@@ -353,7 +353,7 @@ grant all on table storage.objects to authenticated;
       const Button = ({ children, variant = 'primary', fullWidth = false, className = '', ...props }) => {
         const baseStyles = "inline-flex items-center justify-center transition-all duration-200 font-medium tracking-wide disabled:opacity-50 disabled:cursor-not-allowed select-none active:scale-[0.98]";
         const variants = {
-          primary: "bg-[#5C5CFF] hover:bg-[#4a4aff] text-white rounded-full px-6 py-3 shadow-[0_0_20px_-5px_#5C5CFF]",
+          primary: "bg-[#326EC4] hover:bg-[#4a4aff] text-white rounded-full px-6 py-3 shadow-[0_0_20px_-5px_#326EC4]",
           secondary: "bg-white text-black hover:bg-gray-200 rounded-full px-6 py-3",
           ghost: "bg-transparent text-white/70 hover:text-white hover:bg-white/10 rounded-lg p-2",
           icon: "bg-white/10 hover:bg-white/20 text-white rounded-full p-2 backdrop-blur-md",
@@ -389,7 +389,7 @@ grant all on table storage.objects to authenticated;
                 <code className="text-red-300 text-xs break-all">{errorMsg}</code>
               </div>
 
-              <p className="text-white/80 mb-4 text-sm">To fix this, copy the SQL code below and run it in your <a href="https://supabase.com/dashboard/project/_/sql" target="_blank" className="text-[#5C5CFF] hover:underline font-bold">Supabase SQL Editor</a>.</p>
+              <p className="text-white/80 mb-4 text-sm">To fix this, copy the SQL code below and run it in your <a href="https://supabase.com/dashboard/project/_/sql" target="_blank" className="text-[#326EC4] hover:underline font-bold">Supabase SQL Editor</a>.</p>
               
               <div className="relative group mb-6">
                 <pre className="bg-[#050505] p-4 rounded-xl text-xs text-gray-400 font-mono overflow-x-auto h-48 border border-white/10 shadow-inner">
@@ -550,7 +550,7 @@ grant all on table storage.objects to authenticated;
 
               <h2 className="text-xl md:text-2xl font-bold font-display mb-6 bg-gradient-to-r from-white to-white/50 bg-clip-text text-transparent">{initialData ? 'Edit Prompt' : 'Add to Vault'}</h2>
               <form onSubmit={handleSubmit} className="space-y-5 pb-safe-bottom">
-                <div className="space-y-2"><label className="text-sm text-white/60 font-medium ml-1">Title</label><input required type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Cyberpunk Cat" className="glass-input w-full rounded-xl px-4 py-3 focus:outline-none focus:border-[#5C5CFF]/50 transition-colors text-[16px] md:text-sm" /></div>
+                <div className="space-y-2"><label className="text-sm text-white/60 font-medium ml-1">Title</label><input required type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Cyberpunk Cat" className="glass-input w-full rounded-xl px-4 py-3 focus:outline-none focus:border-[#326EC4]/50 transition-colors text-[16px] md:text-sm" /></div>
                 
                 <div className="space-y-2">
                   <label className="text-sm text-white/60 font-medium ml-1">Category</label>
@@ -565,9 +565,9 @@ grant all on table storage.objects to authenticated;
 
                 <div className="space-y-3">
                   <label className="text-sm text-white/60 font-medium ml-1">Image (4:5)</label>
-                  <div className="flex gap-2 mb-2"><button type="button" onClick={() => setImageMode('upload')} className={`text-xs font-bold px-3 py-1.5 rounded-lg ${imageMode === 'upload' ? 'bg-[#5C5CFF] text-white' : 'text-white/50'}`}>Upload</button><button type="button" onClick={() => setImageMode('link')} className={`text-xs font-bold px-3 py-1.5 rounded-lg ${imageMode === 'link' ? 'bg-[#5C5CFF] text-white' : 'text-white/50'}`}>URL</button></div>
+                  <div className="flex gap-2 mb-2"><button type="button" onClick={() => setImageMode('upload')} className={`text-xs font-bold px-3 py-1.5 rounded-lg ${imageMode === 'upload' ? 'bg-[#326EC4] text-white' : 'text-white/50'}`}>Upload</button><button type="button" onClick={() => setImageMode('link')} className={`text-xs font-bold px-3 py-1.5 rounded-lg ${imageMode === 'link' ? 'bg-[#326EC4] text-white' : 'text-white/50'}`}>URL</button></div>
                   {imageMode === 'upload' ? (
-                     <div onClick={() => fileInputRef.current?.click()} className="group relative w-full aspect-[4/5] max-h-[200px] rounded-xl border-2 border-dashed border-white/10 hover:border-[#5C5CFF]/50 bg-white/5 flex flex-col items-center justify-center cursor-pointer overflow-hidden active:scale-[0.99] transition-transform">
+                     <div onClick={() => fileInputRef.current?.click()} className="group relative w-full aspect-[4/5] max-h-[200px] rounded-xl border-2 border-dashed border-white/10 hover:border-[#326EC4]/50 bg-white/5 flex flex-col items-center justify-center cursor-pointer overflow-hidden active:scale-[0.99] transition-transform">
                       {previewUrl ? <img src={previewUrl} className="w-full h-full object-cover opacity-60" /> : <div className="flex flex-col items-center"><Upload size={24} /><span className="text-xs font-bold mt-2">Click to Upload</span></div>}
                       <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
                      </div>
@@ -576,7 +576,7 @@ grant all on table storage.objects to authenticated;
                   )}
                 </div>
 
-                <div className="space-y-2"><label className="text-sm text-white/60 font-medium ml-1">Prompt</label><textarea required value={prompt} onChange={(e) => setPrompt(e.target.value)} rows={5} className="glass-input w-full rounded-xl px-4 py-3 focus:outline-none focus:border-[#5C5CFF]/50 resize-none text-[16px] md:text-sm" /></div>
+                <div className="space-y-2"><label className="text-sm text-white/60 font-medium ml-1">Prompt</label><textarea required value={prompt} onChange={(e) => setPrompt(e.target.value)} rows={5} className="glass-input w-full rounded-xl px-4 py-3 focus:outline-none focus:border-[#326EC4]/50 resize-none text-[16px] md:text-sm" /></div>
                 
                 <div className="flex gap-3 mt-4">
                   {initialData && <Button type="button" variant="danger" onClick={async () => { if(confirm('Delete?')) { setIsDeleting(true); await onDelete(initialData.id).catch(() => {}); onClose(); } }} disabled={isDeleting} className="w-12 px-0"><Trash2 size={20} /></Button>}
@@ -680,7 +680,7 @@ grant all on table storage.objects to authenticated;
              {/* Sticky Action Footer */}
              <div className="fixed bottom-0 left-0 right-0 p-4 md:p-6 bg-gradient-to-t from-black via-black to-transparent z-50 pb-[calc(1rem+env(safe-area-inset-bottom))]">
                 <div className="max-w-xl mx-auto flex gap-4">
-                   <Button onClick={handleCopy} fullWidth variant="primary" className="h-14 text-base font-bold shadow-lg shadow-[#5C5CFF]/30 rounded-full hover:scale-[1.02] active:scale-95 transition-transform">
+                   <Button onClick={handleCopy} fullWidth variant="primary" className="h-14 text-base font-bold shadow-lg shadow-[#326EC4]/30 rounded-full hover:scale-[1.02] active:scale-95 transition-transform">
                       {copied ? 'Copied!' : 'Copy prompt'}
                    </Button>
                 </div>
@@ -716,10 +716,21 @@ grant all on table storage.objects to authenticated;
         
         const [isAddModalOpen, setIsAddModalOpen] = useState(false);
         const [editingPrompt, setEditingPrompt] = useState(null);
+        
+        // Navigation State (active category acts as "page")
         const [activeCategory, setActiveCategory] = useState('All');
         const [searchQuery, setSearchQuery] = useState('');
         
         const { addToast } = useToast();
+
+        // Theme Configuration
+        const themeColors = {
+          'All': '#326EC4', // Default/Home
+          'NanoBanana': '#FFD700', // Yellow
+          'Midjourney': '#00BFFF', // Blue
+          'Seedream': '#00FA9A' // Green
+        };
+        const currentTheme = themeColors[activeCategory] || '#326EC4';
 
         useEffect(() => {
           const init = async () => {
@@ -833,51 +844,99 @@ grant all on table storage.objects to authenticated;
         const filtered = prompts.filter(p => (activeCategory === 'All' || (p.category || 'NanoBanana') === activeCategory) && (p.title.toLowerCase().includes(searchQuery.toLowerCase())));
 
         return (
-          <div className="min-h-screen relative text-white selection:bg-[#5C5CFF] selection:text-white">
+          <div className="min-h-screen relative text-white selection:text-white">
+            <style>{`::selection { background-color: ${currentTheme}; color: black; }`}</style>
+
             {/* Database Repair Modal */}
             <RepairModal isOpen={!!dbError} onClose={() => setDbError(null)} errorMsg={dbError} />
 
-            <div className="fixed inset-0 z-[-1] bg-[#020202]">
-              <div className="absolute top-[-20%] left-[-20%] w-[80vw] h-[80vw] bg-[#5C5CFF]/3 blur-[120px] animate-pulse" />
-              <div className="absolute bottom-[-20%] right-[-20%] w-[80vw] h-[80vw] bg-purple-600/3 blur-[120px] animate-pulse" />
+            {/* Dynamic Background with Theme Color */}
+            <div className="fixed inset-0 z-[-1] bg-[#020202] transition-colors duration-700">
+              <div 
+                 className="absolute top-[-20%] left-[-20%] w-[80vw] h-[80vw] blur-[120px] animate-pulse transition-all duration-1000 ease-in-out" 
+                 style={{ backgroundColor: currentTheme, opacity: 0.04 }}
+              />
+              <div 
+                 className="absolute bottom-[-20%] right-[-20%] w-[80vw] h-[80vw] blur-[120px] animate-pulse transition-all duration-1000 ease-in-out" 
+                 style={{ backgroundColor: currentTheme, opacity: 0.02 }}
+              />
             </div>
 
             {view === 'shared' && sharedData ? <FullView data={sharedData} isOwner={false} onBack={() => {}} /> : 
               view === 'full' && selectedPrompt ? <><FullView data={selectedPrompt} isOwner={true} onBack={() => {window.location.hash=''; setView('gallery');}} onEdit={() => { setEditingPrompt(selectedPrompt); setIsAddModalOpen(true); }} /><AddModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} onSave={handleSave} onDelete={handleDelete} initialData={editingPrompt} /></> : (
               <>
-                <header className="fixed top-0 left-0 right-0 z-30 px-4 py-4 md:px-6 md:py-6 bg-gradient-to-b from-[#020202] to-transparent pointer-events-none pt-[calc(1rem+env(safe-area-inset-top))]">
-                  <div className="flex items-center justify-between pointer-events-auto max-w-7xl mx-auto w-full">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#5C5CFF]/20 to-purple-500/20 border border-white/10 flex items-center justify-center backdrop-blur-md shadow-[0_0_15px_rgba(92,92,255,0.3)]">
-                          <Sparkles size={18} className="text-[#5C5CFF]" fill="currentColor" fillOpacity={0.2} />
+                <header className="fixed top-0 left-0 right-0 z-40 flex justify-center pointer-events-none px-4 pt-[calc(1rem+env(safe-area-inset-top))] md:pt-6">
+                  <div className="pointer-events-auto w-full max-w-6xl bg-black/40 backdrop-blur-[32px] saturate-150 border border-white/10 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.6)] rounded-full py-3 px-2 pl-3 md:pl-4 pr-2 md:pr-2 flex items-center justify-between transition-all duration-500 hover:bg-black/60 hover:border-white/20 ring-1 ring-white/5 group">
+                    
+                    {/* Left: Logo */}
+                    <div className="flex-1 flex items-center justify-start gap-3 md:gap-4 min-w-0">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-white/10 to-white/5 border border-white/10 flex items-center justify-center backdrop-blur-md shadow-inner group-hover:scale-110 transition-transform duration-300" style={{ boxShadow: `0 0 15px ${currentTheme}20` }}>
+                          <Sparkles size={18} style={{ color: currentTheme }} fill="currentColor" fillOpacity={0.4} />
                       </div>
-                      <h1 className="text-2xl md:text-3xl font-extrabold tracking-tighter" style={{ fontFamily: 'Unbounded, sans-serif' }}>Wavy<span className="text-[#5C5CFF]">Prompts</span></h1>
+                      <h1 className="hidden lg:block text-xl md:text-2xl font-extrabold tracking-tighter text-white truncate" style={{ fontFamily: 'Unbounded, sans-serif' }}>
+                        Wavy<span style={{ color: currentTheme }} className="transition-colors duration-500">Prompts</span>
+                      </h1>
                     </div>
-                    <button onClick={() => { setEditingPrompt(null); setIsAddModalOpen(true); }} className="flex items-center gap-2 px-4 py-2 md:px-5 md:py-2.5 rounded-full bg-white text-black font-bold text-xs uppercase tracking-wider hover:bg-[#5C5CFF] hover:text-white transition-all shadow-[0_0_15px_rgba(255,255,255,0.3)] active:scale-95">
-                      <Plus size={14} strokeWidth={3} />
-                      <span className="hidden md:inline">ADD PROMPT</span>
-                      <span className="md:hidden">ADD</span>
-                    </button>
+
+                    {/* Center: Navigation */}
+                    <nav className="flex justify-center items-center overflow-hidden mx-2 md:mx-4 shrink-0">
+                      <div className="flex items-center gap-1 md:gap-2 overflow-x-auto no-scrollbar mask-fade px-2 py-1">
+                        {[
+                          { id: 'All', label: 'Home' },
+                          { id: 'NanoBanana', label: 'NanoBanana' },
+                          { id: 'Midjourney', label: 'Midjourney' },
+                          { id: 'Seedream', label: 'Seedream' }
+                        ].map((item) => {
+                           const isActive = activeCategory === item.id;
+                           return (
+                             <button
+                               key={item.id}
+                               onClick={() => setActiveCategory(item.id)}
+                               className={`px-3 py-1.5 md:px-4 md:py-2 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-widest transition-all duration-300 whitespace-nowrap ${isActive ? 'shadow-[0_0_15px_rgba(0,0,0,0.3)] text-black' : 'hover:bg-white/5 text-white/50 hover:text-white'}`}
+                               style={isActive ? { backgroundColor: currentTheme, color: '#000000', boxShadow: `0 0 15px ${currentTheme}60` } : {}}
+                             >
+                               {item.label}
+                             </button>
+                           );
+                        })}
+                      </div>
+                    </nav>
+
+                    {/* Right: Add Button */}
+                    <div className="flex-1 flex items-center justify-end min-w-0">
+                      <button onClick={() => { setEditingPrompt(null); setIsAddModalOpen(true); }} className="flex items-center gap-2 px-5 py-3 rounded-full bg-white text-black font-bold text-xs uppercase tracking-wider hover:bg-[#326EC4] hover:text-white transition-all shadow-[0_0_20px_-5px_rgba(255,255,255,0.3)] active:scale-95 active:bg-[#326EC4] active:text-white whitespace-nowrap" style={{ '--hover-color': currentTheme }}>
+                        <Plus size={16} strokeWidth={3} />
+                        <span className="hidden md:inline">ADD PROMPT</span>
+                        <span className="md:hidden">ADD</span>
+                      </button>
+                    </div>
                   </div>
                 </header>
 
                 <main className="pt-24 md:pt-28 pb-20 px-4 md:px-6 z-10 relative max-w-7xl mx-auto">
-                  <div className="flex flex-col-reverse md:flex-row md:items-center justify-between gap-6 mb-8 md:mb-10">
-                    <div className="flex items-center gap-3 overflow-x-auto no-scrollbar pb-1">
-                      {['All', 'NanoBanana', 'Midjourney', 'Seedream'].map((cat) => {
-                        const isSelected = activeCategory === cat;
-                        let activeStyle = isSelected ? (cat === 'NanoBanana' ? "bg-yellow-400 text-black" : cat === 'Midjourney' ? "bg-blue-400 text-black" : cat === 'Seedream' ? "bg-green-400 text-black" : "bg-white text-black") : 'bg-white/5 text-white/50 hover:bg-white/10';
-                        return <button key={cat} onClick={() => setActiveCategory(cat)} className={`px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-widest whitespace-nowrap transition-all duration-300 flex-shrink-0 ${activeStyle}`}>{cat}</button>;
-                      })}
-                    </div>
-                    <div className="relative w-full md:w-72 group">
-                      <Search size={16} className="absolute left-4 top-3 text-white/30 group-focus-within:text-[#5C5CFF] transition-colors" />
-                      <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search prompts..." className="w-full bg-white/5 border border-white/10 text-white rounded-full pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:bg-white/10 focus:border-[#5C5CFF]/50 transition-all text-[16px] md:text-sm" />
+                  
+                  {/* Search Bar - Full Width Centered */}
+                  <div className="mb-8 md:mb-10 max-w-2xl mx-auto w-full">
+                    <div className="relative w-full group">
+                      <Search size={16} className="absolute left-4 top-3 text-white/30 group-focus-within:opacity-100 transition-all duration-300" style={{ color: 'rgba(255,255,255,0.3)' }} />
+                      <input 
+                        type="text" 
+                        value={searchQuery} 
+                        onChange={(e) => setSearchQuery(e.target.value)} 
+                        placeholder={`Search ${activeCategory === 'All' ? 'all' : activeCategory} prompts...`} 
+                        className="w-full bg-white/5 border border-white/10 text-white rounded-full pl-10 pr-4 py-3 text-sm focus:outline-none focus:bg-white/10 transition-all text-[16px] md:text-sm shadow-lg" 
+                        style={{ outlineColor: currentTheme }}
+                        onFocus={(e) => e.target.style.borderColor = currentTheme}
+                        onBlur={(e) => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+                      />
                     </div>
                   </div>
 
                   {loading ? (
-                    <div className="flex flex-col items-center justify-center py-20"><Loader2 size={40} className="text-[#5C5CFF] animate-spin mb-4" /><p className="text-white/50 text-sm font-display tracking-widest uppercase">Syncing Vault...</p></div>
+                    <div className="flex flex-col items-center justify-center py-20">
+                      <Loader2 size={40} className="animate-spin mb-4" style={{ color: currentTheme }} />
+                      <p className="text-white/50 text-sm font-display tracking-widest uppercase">Syncing Vault...</p>
+                    </div>
                   ) : filtered.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 text-center">
                       <div className="w-24 h-24 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-6"><Plus size={28} className="text-white/20" /></div>
