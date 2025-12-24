@@ -387,7 +387,7 @@ grant all on table storage.objects to authenticated;
         return (
           <div className="relative w-full h-[400px] md:h-[480px] rounded-[32px] overflow-hidden mb-12 border border-white/10 shadow-2xl bg-[#0a0a0a] group">
               {/* Background Columns - Tilted and Animated */}
-              <div className="absolute inset-[-100px] opacity-40 flex gap-4 justify-center items-start transform -rotate-6 scale-110 pointer-events-none select-none">
+              <div className="absolute inset-[-100px] opacity-70 flex gap-4 justify-center items-start transform -rotate-6 scale-110 pointer-events-none select-none">
                   {cols.map((colItems, colIndex) => (
                       <div 
                         key={colIndex} 
@@ -401,7 +401,7 @@ grant all on table storage.objects to authenticated;
                               <div key={i} className="w-full aspect-[4/5] rounded-xl bg-gray-800/50 overflow-hidden border border-white/5 relative">
                                  <img 
                                     src={p ? p.imageUrl : `https://picsum.photos/seed/${colIndex * 100 + i}/400/500`} 
-                                    className="w-full h-full object-cover opacity-60 grayscale group-hover:grayscale-0 transition-all duration-700 ease-out" 
+                                    className="w-full h-full object-cover transition-all duration-700 ease-out" 
                                     loading="lazy"
                                     alt=""
                                  />
@@ -411,8 +411,8 @@ grant all on table storage.objects to authenticated;
                   ))}
               </div>
 
-              {/* Dark Gradient Overlay for Readability */}
-              <div className="absolute inset-0 bg-gradient-to-t from-[#020202] via-[#020202]/70 to-black/40"></div>
+              {/* Dark Gradient Overlay for Readability - Reduced darkness */}
+              <div className="absolute inset-0 bg-gradient-to-t from-[#020202] via-[#020202]/60 to-black/10"></div>
               
               {/* Content */}
               <div className="absolute inset-0 flex flex-col items-center justify-center z-10 p-6 text-center">
