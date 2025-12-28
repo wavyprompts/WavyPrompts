@@ -49,6 +49,9 @@
         margin: 0;
         overflow-x: hidden;
         min-height: 100vh;
+        /* Performance optimization: subpixel antialiasing */
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
 
       /* --- CUSTOM SCROLLBAR UI --- */
@@ -100,6 +103,8 @@
         -webkit-backdrop-filter: blur(16px);
         border: 1px solid rgba(255, 255, 255, 0.08);
         box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        /* GPU acceleration hint */
+        transform: translateZ(0);
       }
       
       .glass-input {
@@ -115,6 +120,7 @@
         -webkit-backdrop-filter: blur(12px);
         border: 1px solid rgba(255, 255, 255, 0.08);
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        transform: translateZ(0);
       }
 
       .glass-element:hover {
@@ -146,22 +152,159 @@
         animation: text-reveal 1.2s cubic-bezier(0.19, 1, 0.22, 1) forwards;
       }
 
-      /* Marquee Animations for Hero Section */
+      /* Marquee Animations with GPU acceleration */
       @keyframes marquee-up {
-        0% { transform: translateY(0); }
-        100% { transform: translateY(-50%); }
+        0% { transform: translateY(0) translateZ(0); }
+        100% { transform: translateY(-50%) translateZ(0); }
       }
       @keyframes marquee-down {
-        0% { transform: translateY(-50%); }
-        100% { transform: translateY(0); }
+        0% { transform: translateY(-50%) translateZ(0); }
+        100% { transform: translateY(0) translateZ(0); }
       }
+
+      /* Performance optimization for marquee */
+      .marquee-col {
+        will-change: transform;
+        backface-visibility: hidden;
+      }
+      /* ===== COMING SOON WALL ===== */
+.coming-wall {
+  position: fixed;
+  inset: 0;
+  background: #020202;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  color: white;
+}
+
+/* Header */
+.cs-header {
+  height: 72px;
+  margin: 16px;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(30px);
+  border: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  align-items: center;
+  padding: 0 28px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+}
+
+.cs-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 800;
+  font-size: 22px;
+  letter-spacing: -0.02em;
+}
+
+.cs-brand img {
+  width: 40px;
+  height: 40px;
+}
+
+.cs-brand .blue {
+  color: #547EAE;
+}
+
+/* Center */
+.cs-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 6vw;
+}
+
+.cs-center h1 {
+  font-family: 'Milker','Unbounded','Syne',sans-serif;
+  font-size: clamp(3.5rem, 8vw, 6.8rem);
+  line-height: 0.85;
+  letter-spacing: -0.08em;
+  margin: 0;
+  font-weight: 900;
+  text-transform: uppercase;
+  display: flex;
+  flex-direction: column;
+}
+
+
+.cs-center h1 .muted {
+  opacity: 1;
+}
+
+.cs-center p {
+  margin-top: 18px;
+  max-width: 420px;
+  font-size: 14px;
+  opacity: 0.45;
+}
+
+.cs-center .coming {
+  margin-top: 40px;
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  opacity: 0.4;
+}
+
+ 
     </style>
+
+    <script>
+  (function () {
+    const ADMIN_KEY = "wavy_admin";
+    const ADMIN_PASSWORD = "uzair2643";
+
+    const params = new URLSearchParams(window.location.search);
+    const adminParam = params.get("admin");
+
+    if (adminParam && adminParam === ADMIN_PASSWORD) {
+      localStorage.setItem(ADMIN_KEY, "1");
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  })();
+</script>
+
   </head>
   <body>
+
+    <!-- COMING SOON WALL -->
+  <div id="coming-wall" class="coming-wall" style="display:none;">
+
+    <script>
+  if (localStorage.getItem("wavy_admin") !== "1") {
+    document.getElementById("coming-wall").style.display = "flex";
+  }
+</script>
+
+
+
+    <div class="cs-header">
+      <div class="cs-brand">
+        <img src="./logo.svg" alt="WavyPrompts Logo" />
+        <span>Wavy<span class="blue">Prompts</span></span>
+      </div>
+    </div>
+
+    <div class="cs-center">
+      <h1>
+        <span>STAY WAVY</span>
+        <span>PROMPT</span>
+        <span>SMARTER</span>
+      </h1>
+      
+      <span class="coming">COMING SOON</span>
+    </div>
+
+  </div>
+
     <div id="root"></div>
 
     <script type="text/babel" data-presets="react" data-type="module">
-      import React, { useState, useEffect, useRef, useContext, createContext } from "https://esm.sh/react@18.2.0";
+      import React, { useState, useEffect, useRef, useContext, createContext, useMemo } from "https://esm.sh/react@18.2.0";
       import ReactDOM from "https://esm.sh/react-dom@18.2.0/client";
       import { 
         Copy, Share2, Plus, X, ChevronLeft, Image as ImageIcon, 
@@ -373,25 +516,22 @@ grant all on table storage.objects to authenticated;
       };
 
       const HeroSection = ({ prompts }) => {
-        // Use real prompts or fallbacks. Ensure we have enough to fill columns nicely.
-        const pool = prompts && prompts.length > 0 ? prompts : Array.from({length: 12}).fill(null);
-        // Duplicate pool to ensure enough items for scrolling effect
-        const items = [...pool, ...pool, ...pool, ...pool].slice(0, 36); 
-        
-        // Create 6 columns
-        const cols = [[], [], [], [], [], []];
-        items.forEach((item, i) => {
-            cols[i % 6].push(item);
-        });
+        const cols = useMemo(() => {
+          const pool = prompts && prompts.length > 0 ? prompts : Array.from({length: 12}).fill(null);
+          const items = [...pool, ...pool, ...pool, ...pool].slice(0, 36); 
+          const result = [[], [], [], [], [], []];
+          items.forEach((item, i) => { result[i % 6].push(item); });
+          return result;
+        }, [prompts]);
 
         return (
-          <div className="relative w-full h-[400px] md:h-[480px] rounded-[32px] overflow-hidden mb-12 border border-white/10 shadow-2xl bg-[#0a0a0a] group">
+          <div className="relative w-full h-[400px] md:h-[480px] rounded-[32px] overflow-hidden mb-12 border border-white/10 shadow-2xl bg-[#0a0a0a] group hardware-accelerated">
               {/* Background Columns - Tilted and Animated */}
               <div className="absolute inset-[-100px] opacity-70 flex gap-4 justify-center items-start transform -rotate-6 scale-110 pointer-events-none select-none">
                   {cols.map((colItems, colIndex) => (
                       <div 
                         key={colIndex} 
-                        className="flex flex-col gap-4 w-1/3 sm:w-1/4 md:w-1/6 shrink-0"
+                        className="marquee-col flex flex-col gap-4 w-1/3 sm:w-1/4 md:w-1/6 shrink-0"
                         style={{
                             animation: `${colIndex % 2 === 0 ? 'marquee-up' : 'marquee-down'} ${40 + (colIndex * 5)}s linear infinite`
                         }}
@@ -414,7 +554,7 @@ grant all on table storage.objects to authenticated;
               {/* Dark Gradient Overlay for Readability */}
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
               
-              {/* Content - MODIFIED: Left Aligned and Smaller Size */}
+              {/* Content - Left Aligned */}
               <div className="absolute inset-0 flex flex-col items-start justify-end z-10 p-8 pb-12 md:pb-16 text-left">
                    <h1 className="font-display font-black text-3xl md:text-5xl tracking-tighter leading-[0.85] text-white drop-shadow-2xl flex flex-col gap-0 md:gap-1">
                       <span>STAY WAVY</span>
@@ -757,7 +897,6 @@ grant all on table storage.objects to authenticated;
         );
       };
 
-      // FIX: Moved MainApp logic outside of App to prevent infinite re-rendering (flickering)
       const MainApp = () => {
         // Initialize state based on URL hash to prevent flash of homepage
         const [sharedData, setSharedData] = useState(() => {
@@ -785,41 +924,34 @@ grant all on table storage.objects to authenticated;
         const [isAddModalOpen, setIsAddModalOpen] = useState(false);
         const [editingPrompt, setEditingPrompt] = useState(null);
         
-        // Navigation State (active category acts as "page")
+        // Navigation State
         const [activeCategory, setActiveCategory] = useState('All');
         const [searchQuery, setSearchQuery] = useState('');
         
         const { addToast } = useToast();
 
-        // Theme Configuration
-        const themeColors = {
-          'All': '#547EAE', // Default/Home
-          'NanoBanana': '#FFD700', // Yellow
-          'CHATGPT': '#00A67E', // Green (Updated)
-          'Midjourney': '#00BFFF', // Blue
-        };
+        // Theme Configuration - Seedream removed, CHATGPT updated
+        const themeColors = useMemo(() => ({
+          'All': '#547EAE', 
+          'NanoBanana': '#FFD700', 
+          'CHATGPT': '#00A67E', 
+          'Midjourney': '#00BFFF'
+        }), []);
+        
         const currentTheme = themeColors[activeCategory] || '#547EAE';
 
         useEffect(() => {
           const init = async () => {
             setLoading(true);
-            
-            // Check DB Health First
             const health = await checkDatabaseHealth();
-            if (!health.healthy) {
-              setDbError(health.error); 
-            }
+            if (!health.healthy) setDbError(health.error); 
 
             try {
               const data = await fetchPrompts();
               setPrompts(data);
               checkHash(data);
             } catch (err) {
-              if (!health.healthy) {
-                console.warn("Fetch failed due to DB schema");
-              } else {
-                setError(err.message);
-              }
+              if (health.healthy) setError(err.message);
             } finally {
               setLoading(false);
             }
@@ -828,7 +960,6 @@ grant all on table storage.objects to authenticated;
           const checkHash = (currentPrompts) => {
             const hash = window.location.hash;
             if (hash.startsWith('#/share/')) {
-              // Redundant if handled in initial state, but good for safety
               const decoded = decodeShareData(hash.split('#/share/')[1]);
               if (decoded) { setSharedData(decoded); setView('shared'); } 
             } else if (hash.startsWith('#/view/')) {
@@ -844,52 +975,24 @@ grant all on table storage.objects to authenticated;
           const lenis = new Lenis({ duration: 1.2, smoothWheel: true });
           function raf(time) { lenis.raf(time); requestAnimationFrame(raf); }
           requestAnimationFrame(raf);
-
           return () => lenis.destroy();
         }, []);
 
         const handleSave = async (promptData, imageFile, onStatusUpdate) => { 
           try {
             let finalImageUrl = promptData.imageUrl;
-            
-            // Handle Image Upload if file exists
             if (imageFile) {
                  if (onStatusUpdate) onStatusUpdate('uploading');
-                 try {
-                     finalImageUrl = await uploadImageToSupabase(imageFile);
-                 } catch (uploadErr) {
-                     const msg = (uploadErr.message || "").toLowerCase();
-                     if (msg.includes('storage permission') || msg.includes('row-level security') || msg.includes('403')) {
-                         setDbError("Storage Permissions Denied. Please run the repair script to fix your bucket policies.");
-                         throw new Error("Storage Permission Denied. Run the repair script.");
-                     }
-                     throw uploadErr;
-                 }
+                 finalImageUrl = await uploadImageToSupabase(imageFile);
             }
-
             if (onStatusUpdate) onStatusUpdate('saving');
-            const payload = {
-                ...promptData,
-                imageUrl: finalImageUrl
-            };
-
-            await savePromptToSupabase(payload);
-            
+            await savePromptToSupabase({ ...promptData, imageUrl: finalImageUrl });
             if (onStatusUpdate) onStatusUpdate('syncing');
             const data = await fetchPrompts(); 
             setPrompts(data); 
           } catch (err) {
               console.error(err);
-              const msg = (err.message || "Unknown error").toLowerCase();
-              if (msg.includes('column') || msg.includes('does not exist') || msg.includes('42703')) {
-                addToast("⚠️ DB Schema Error: Columns missing.", 'error');
-                setDbError(err.message);
-              } else if (msg.includes('policy') || msg.includes('permission') || msg.includes('42501')) {
-                addToast("⚠️ DB Permission Error: RLS Policy violation.", 'error');
-                setDbError("Row-Level Security (RLS) Policy Violation. Please run the repair script.");
-              } else {
-                // If it's the storage permission error we rethrew, it's already setDbError, but we might want to log it
-              }
+              setDbError(err.message);
               throw err; 
           }
         };
@@ -901,15 +1004,13 @@ grant all on table storage.objects to authenticated;
               setPrompts(data); 
           } catch (err) {
               console.error(err);
-              const msg = (err.message || "Unknown error").toLowerCase();
-              if (msg.includes('policy') || msg.includes('permission') || msg.includes('42501')) {
-                setDbError("Row-Level Security (RLS) Policy Violation. Please run the repair script.");
-              }
               throw err;
           }
         };
 
-        const filtered = prompts.filter(p => (activeCategory === 'All' || (p.category || 'NanoBanana') === activeCategory) && (p.title.toLowerCase().includes(searchQuery.toLowerCase())));
+        const filtered = useMemo(() => {
+          return prompts.filter(p => (activeCategory === 'All' || (p.category || 'NanoBanana') === activeCategory) && (p.title.toLowerCase().includes(searchQuery.toLowerCase())));
+        }, [prompts, activeCategory, searchQuery]);
 
         return (
           <div className="min-h-screen relative text-white selection:text-white">
@@ -918,15 +1019,15 @@ grant all on table storage.objects to authenticated;
             {/* Database Repair Modal */}
             <RepairModal isOpen={!!dbError} onClose={() => setDbError(null)} errorMsg={dbError} />
 
-            {/* Dynamic Background with Theme Color */}
-            <div className="fixed inset-0 z-[-1] bg-[#020202] transition-colors duration-700">
+            {/* Dynamic Background with Theme Color - GPU Optimized */}
+            <div className="fixed inset-0 z-[-1] bg-[#020202] transition-colors duration-700 pointer-events-none">
               <div 
-                   className="absolute top-[-20%] left-[-20%] w-[80vw] h-[80vw] blur-[120px] transition-all duration-1000 ease-in-out" 
-                   style={{ backgroundColor: currentTheme, opacity: 0.04 }}
+                   className="absolute top-[-20%] left-[-20%] w-[80vw] h-[80vw] blur-[120px] transition-all duration-1000 ease-in-out will-change-[background-color,opacity]" 
+                   style={{ backgroundColor: currentTheme, opacity: 0.04, transform: 'translateZ(0)' }}
               />
               <div 
-                   className="absolute bottom-[-20%] right-[-20%] w-[80vw] h-[80vw] blur-[120px] transition-all duration-1000 ease-in-out" 
-                   style={{ backgroundColor: currentTheme, opacity: 0.02 }}
+                   className="absolute bottom-[-20%] right-[-20%] w-[80vw] h-[80vw] blur-[120px] transition-all duration-1000 ease-in-out will-change-[background-color,opacity]" 
+                   style={{ backgroundColor: currentTheme, opacity: 0.02, transform: 'translateZ(0)' }}
               />
             </div>
 
@@ -944,7 +1045,7 @@ grant all on table storage.objects to authenticated;
                       </h1>
                     </div>
 
-                    {/* Center: Navigation */}
+                    {/* Center: Navigation - Removed Seedream */}
                     <nav className="flex justify-center items-center overflow-hidden mx-2 md:mx-4 shrink-0">
                       <div className="flex items-center gap-1 md:gap-2 overflow-x-auto no-scrollbar mask-fade px-2 py-1">
                         {[
@@ -970,7 +1071,7 @@ grant all on table storage.objects to authenticated;
 
                     {/* Right: Add Button */}
                     <div className="flex-1 flex items-center justify-end min-w-0">
-                      <button onClick={() => { setEditingPrompt(null); setIsAddModalOpen(true); }} className="flex items-center gap-2 px-5 py-3 rounded-full bg-white text-black font-bold text-xs uppercase tracking-wider hover:bg-[#547EAE] hover:text-white transition-all shadow-[0_0_20px_-5px_rgba(255,255,255,0.3)] active:scale-95 active:bg-[#547EAE] active:text-white whitespace-nowrap" style={{ '--hover-color': currentTheme }}>
+                      <button onClick={() => { setEditingPrompt(null); setIsAddModalOpen(true); }} className="flex items-center gap-2 px-5 py-3 rounded-full bg-white text-black font-bold text-xs uppercase tracking-wider hover:bg-[#547EAE] hover:text-white transition-all shadow-[0_0_20px_-5px_rgba(255,255,255,0.3)] active:scale-95 active:bg-[#547EAE] active:text-white whitespace-nowrap">
                         <Plus size={16} strokeWidth={3} />
                         <span className="hidden md:inline">ADD PROMPT</span>
                         <span className="md:hidden">ADD</span>
@@ -980,23 +1081,18 @@ grant all on table storage.objects to authenticated;
                 </header>
 
                 <main className="pt-24 md:pt-28 pb-20 px-4 md:px-6 z-10 relative max-w-7xl mx-auto">
-                  
-                  {/* HERO SECTION */}
                   <HeroSection prompts={prompts} />
 
-                  {/* Search Bar - Full Width Centered */}
+                  {/* Search Bar */}
                   <div className="mb-8 md:mb-10 max-w-2xl mx-auto w-full">
                     <div className="relative w-full group">
-                      <Search size={16} className="absolute left-4 top-3 text-white/30 group-focus-within:opacity-100 transition-all duration-300" style={{ color: 'rgba(255,255,255,0.3)' }} />
+                      <Search size={16} className="absolute left-4 top-3 text-white/30" />
                       <input 
                         type="text" 
                         value={searchQuery} 
                         onChange={(e) => setSearchQuery(e.target.value)} 
                         placeholder={`Search ${activeCategory === 'All' ? 'all' : activeCategory} prompts...`} 
-                        className="w-full bg-white/5 border border-white/10 text-white rounded-full pl-10 pr-4 py-3 text-sm focus:outline-none focus:bg-white/10 transition-all text-[16px] md:text-sm shadow-lg" 
-                        style={{ outlineColor: currentTheme }}
-                        onFocus={(e) => e.target.style.borderColor = currentTheme}
-                        onBlur={(e) => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+                        className="w-full bg-white/5 border border-white/10 text-white rounded-full pl-10 pr-4 py-3 text-sm focus:outline-none focus:bg-white/10 transition-all shadow-lg" 
                       />
                     </div>
                   </div>
@@ -1010,11 +1106,18 @@ grant all on table storage.objects to authenticated;
                     <div className="flex flex-col items-center justify-center py-20 text-center">
                       <div className="w-24 h-24 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-6"><Plus size={28} className="text-white/20" /></div>
                       <h2 className="text-xl font-display text-white/80 mb-2">Vault Empty</h2>
-                      <p className="text-white/40 max-w-xs mx-auto mb-8">Start your collection by adding your first AI generation prompt.</p>
+                      <p className="text-white/40 max-w-xs mx-auto mb-8">Start your collection by adding your first prompt.</p>
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                      {filtered.map((prompt) => (<PromptCard key={prompt.id} data={prompt} onClick={() => { window.location.hash = `#/view/${prompt.id}`; setSelectedPrompt(prompt); setView('full'); }} onEdit={() => { setEditingPrompt(prompt); setIsAddModalOpen(true); }} />))}
+                      {filtered.map((prompt) => (
+                        <PromptCard 
+                          key={prompt.id} 
+                          data={prompt} 
+                          onClick={() => { window.location.hash = `#/view/${prompt.id}`; setSelectedPrompt(prompt); setView('full'); }} 
+                          onEdit={() => { setEditingPrompt(prompt); setIsAddModalOpen(true); }} 
+                        />
+                      ))}
                     </div>
                   )}
                 </main>
@@ -1036,5 +1139,10 @@ grant all on table storage.objects to authenticated;
       const root = ReactDOM.createRoot(document.getElementById('root'));
       root.render(<App />);
     </script>
+    <script>
+  if (localStorage.getItem("uzair2643") === "1") {
+    document.getElementById("coming-wall")?.remove();
+  }
+</script>
   </body>
 </html>
