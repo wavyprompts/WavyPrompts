@@ -467,7 +467,7 @@ grant all on table storage.objects to authenticated;
                 </button>
               </div>
 
-              <div className="flex django- justify-end gap-3">
+              <div className="flex justify-end gap-3">
                 <Button variant="ghost" onClick={onClose}>Ignore</Button>
                 <Button onClick={() => window.location.reload()} variant="primary">I've Run It, Reload App</Button>
               </div>
@@ -496,9 +496,8 @@ grant all on table storage.objects to authenticated;
         const getDotColor = (c) => {
           switch(c) {
             case 'NanoBanana': return 'bg-[#FFD700] shadow-[0_0_8px_rgba(255,215,0,0.5)]';
-            case 'CHATGPT': return 'bg-[#ab68ff] shadow-[0_0_8px_rgba(171,104,255,0.5)]';
+            case 'CHATGPT': return 'bg-[#00A67E] shadow-[0_0_8px_rgba(0,166,126,0.5)]';
             case 'Midjourney': return 'bg-[#00BFFF] shadow-[0_0_8px_rgba(0,191,255,0.5)]';
-            case 'Seedream': return 'bg-[#00FA9A] shadow-[0_0_8px_rgba(0,250,154,0.5)]';
             default: return 'bg-white';
           }
         };
@@ -622,9 +621,9 @@ grant all on table storage.objects to authenticated;
                 <div className="space-y-2">
                   <label className="text-sm text-white/60 font-medium ml-1">Category</label>
                   <div className="flex gap-2 flex-wrap">
-                    {['NanoBanana', 'CHATGPT', 'Midjourney', 'Seedream'].map((cat) => {
+                    {['NanoBanana', 'CHATGPT', 'Midjourney'].map((cat) => {
                        const isSelected = category === cat;
-                       let activeClass = isSelected ? (cat === 'NanoBanana' ? 'bg-yellow-400 border-yellow-400 text-black' : cat === 'CHATGPT' ? 'bg-[#ab68ff] border-[#ab68ff] text-white' : cat === 'Midjourney' ? 'bg-blue-400 border-blue-400 text-black' : 'bg-green-400 border-green-400 text-black') : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10';
+                       let activeClass = isSelected ? (cat === 'NanoBanana' ? 'bg-yellow-400 border-yellow-400 text-black' : cat === 'CHATGPT' ? 'bg-[#00A67E] border-[#00A67E] text-white' : 'bg-blue-400 border-blue-400 text-black') : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10';
                        return <button key={cat} type="button" onClick={() => setCategory(cat)} className={`px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border ${activeClass}`}>{cat}</button>;
                     })}
                   </div>
@@ -674,9 +673,8 @@ grant all on table storage.objects to authenticated;
         const getDotColor = (c) => {
           switch(c) {
             case 'NanoBanana': return 'bg-[#FFD700] shadow-[0_0_8px_rgba(255,215,0,0.5)]';
-            case 'CHATGPT': return 'bg-[#ab68ff] shadow-[0_0_8px_rgba(171,104,255,0.5)]';
+            case 'CHATGPT': return 'bg-[#00A67E] shadow-[0_0_8px_rgba(0,166,126,0.5)]';
             case 'Midjourney': return 'bg-[#00BFFF] shadow-[0_0_8px_rgba(0,191,255,0.5)]';
-            case 'Seedream': return 'bg-[#00FA9A] shadow-[0_0_8px_rgba(0,250,154,0.5)]';
             default: return 'bg-white';
           }
         };
@@ -688,19 +686,10 @@ grant all on table storage.objects to authenticated;
           setTimeout(() => setCopied(false), 2000);
         };
 
-        const handleShare = () => {
-          const encoded = encodeShareData(data);
-          if (!encoded) return;
-          const url = `${window.location.origin}${window.location.pathname}#/share/${encoded}`;
-          navigator.clipboard.writeText(url).then(() => {
-            addToast("Share link copied!");
-          });
-        };
-
         return (
           <div data-lenis-prevent className="fixed inset-0 z-[100] bg-black text-white overflow-y-auto">
              
-             {/* Floating Floating Controls - REPLACED STICKY HEADER */}
+             {/* Floating Controls */}
              <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between p-4 md:p-6 pointer-events-none pt-[calc(1rem+env(safe-area-inset-top))]">
                 <button 
                   onClick={onBack} 
@@ -758,9 +747,9 @@ grant all on table storage.objects to authenticated;
                      href="https://www.instagram.com/wavyprompts/"
                      target="_blank"
                      rel="noopener noreferrer"
-                     className="shrink-0 w-14 h-14 rounded-full glass-element flex items-center justify-center border border-white/10 hover:bg-white/10 transition-all active:scale-90 shadow-lg shadow-black/50 overflow-hidden"
+                     className="shrink-0 w-14 h-14 rounded-[16px] glass-element flex items-center justify-center border border-white/10 hover:bg-white/10 transition-all active:scale-90 shadow-lg shadow-black/50 p-0 overflow-hidden"
                    >
-                     <img src="./logo.svg" alt="Instagram Link" className="w-8 h-8 drop-shadow-md object-contain" />
+                     <img src="./logo.svg" alt="WavyPrompts Instagram" className="w-full h-full drop-shadow-md object-cover" />
                    </a>
                 </div>
              </div>
@@ -806,9 +795,8 @@ grant all on table storage.objects to authenticated;
         const themeColors = {
           'All': '#547EAE', // Default/Home
           'NanoBanana': '#FFD700', // Yellow
-          'CHATGPT': '#ab68ff', // Purple
+          'CHATGPT': '#00A67E', // Green (Updated)
           'Midjourney': '#00BFFF', // Blue
-          'Seedream': '#00FA9A' // Green
         };
         const currentTheme = themeColors[activeCategory] || '#547EAE';
 
@@ -963,8 +951,7 @@ grant all on table storage.objects to authenticated;
                           { id: 'All', label: 'Home' },
                           { id: 'NanoBanana', label: 'NanoBanana' },
                           { id: 'CHATGPT', label: 'CHATGPT' },
-                          { id: 'Midjourney', label: 'Midjourney' },
-                          { id: 'Seedream', label: 'Seedream' }
+                          { id: 'Midjourney', label: 'Midjourney' }
                         ].map((item) => {
                            const isActive = activeCategory === item.id;
                            return (
@@ -972,7 +959,7 @@ grant all on table storage.objects to authenticated;
                                key={item.id}
                                onClick={() => setActiveCategory(item.id)}
                                className={`px-3 py-1.5 md:px-4 md:py-2 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-widest transition-all duration-300 whitespace-nowrap ${isActive ? 'shadow-[0_0_15px_rgba(0,0,0,0.3)] text-black' : 'hover:bg-white/5 text-white/50 hover:text-white'}`}
-                               style={isActive ? { backgroundColor: currentTheme, color: item.id === 'CHATGPT' ? '#ffffff' : '#000000', boxShadow: `0 0 15px ${currentTheme}60` } : {}}
+                               style={isActive ? { backgroundColor: currentTheme, color: '#000000', boxShadow: `0 0 15px ${currentTheme}60` } : {}}
                              >
                                {item.label}
                              </button>
