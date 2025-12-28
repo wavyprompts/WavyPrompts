@@ -1140,9 +1140,28 @@ grant all on table storage.objects to authenticated;
       root.render(<App />);
     </script>
     <script>
-  if (localStorage.getItem("uzair2643") === "1") {
-    document.getElementById("coming-wall")?.remove();
-  }
+  (function () {
+    const wall = document.getElementById("coming-wall");
+
+    function updateWall() {
+      const isAdmin = localStorage.getItem("wavy_admin") === "1";
+      const hash = window.location.hash || "";
+      const isSharedLink = hash.startsWith("#/share/");
+
+      if (isAdmin || isSharedLink) {
+        wall.style.display = "none";
+      } else {
+        wall.style.display = "flex";
+      }
+    }
+
+    // Run immediately
+    updateWall();
+
+    // Run again whenever hash changes (CRITICAL)
+    window.addEventListener("hashchange", updateWall);
+  })();
 </script>
+
   </body>
 </html>
