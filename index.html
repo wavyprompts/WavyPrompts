@@ -11,7 +11,7 @@
     <script>
       window.process = { env: { NODE_ENV: 'production' } };
       
-      // --- FIXED: Attached to window to prevent Vercel Crash ---
+      // --- FIXED: Attached to window to prevent Vercel Black Screen ---
       window.SafeStorage = {
         getItem: (key) => {
           try { return localStorage.getItem(key); } 
@@ -226,6 +226,7 @@
         const adminParam = params.get("admin");
 
         if (adminParam && adminParam === ADMIN_PASSWORD) {
+          // FIXED: Use window.SafeStorage
           window.SafeStorage.setItem(ADMIN_KEY, "1");
           try {
             window.history.replaceState({}, document.title, window.location.pathname);
@@ -238,7 +239,7 @@
 
     <div id="coming-wall" class="coming-wall" style="display:none;">
       <script>
-        // FIXED: Using window.SafeStorage
+        // FIXED: Use window.SafeStorage
         if (window.SafeStorage.getItem("wavy_admin") !== "1") {
           document.getElementById("coming-wall").style.display = "flex";
         }
