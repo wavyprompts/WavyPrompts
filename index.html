@@ -6,35 +6,33 @@
     <title>WavyPrompts</title>
     <link rel="icon" type="image/svg+xml" href="./logo.svg">
     
-    <script>
-      window.onerror = function(msg, url, line, col, error) {
-        if(msg.includes("ResizeObserver")) return;
-        const wall = document.getElementById("coming-wall");
-        if(wall) wall.style.display = "flex"; // Force wall visible on crash
-        
-        const errorBox = document.createElement('div');
-        errorBox.style.cssText = 'position:fixed; top:0; left:0; width:100%; background:rgba(255,0,0,0.9); color:white; padding:20px; z-index:100000; font-family:monospace; font-size:12px; white-space:pre-wrap;';
-        errorBox.innerHTML = '<strong>CRASH DETECTED:</strong><br>' + msg + '<br>Line: ' + line;
-        document.body.appendChild(errorBox);
-      };
-    </script>
-
     <script src="https://cdn.tailwindcss.com"></script>
     
     <script>
       window.process = { env: { NODE_ENV: 'production' } };
-      window.global = window; 
       
+      // --- FIXED: Attached to window to prevent Vercel Crash ---
       window.SafeStorage = {
         getItem: (key) => {
-          try { return localStorage.getItem(key); } catch (e) { return null; }
+          try { return localStorage.getItem(key); } 
+          catch (e) { console.warn('Storage access blocked'); return null; }
         },
         setItem: (key, val) => {
-          try { localStorage.setItem(key, val); } catch (e) { }
+          try { localStorage.setItem(key, val); } 
+          catch (e) { console.warn('Storage access blocked'); }
         }
       };
     </script>
 
+    <script>
+      (function() {
+        const originalWarn = console.warn;
+        console.warn = function(...args) {
+          if (args[0] && typeof args[0] === 'string' && args[0].includes('in-browser Babel transformer')) return;
+          originalWarn.apply(console, args);
+        };
+      })();
+    </script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -50,16 +48,24 @@
         font-style: normal;
       }
 
-      html { scroll-behavior: auto; height: 100%; }
+      html {
+        scroll-behavior: auto;
+        height: 100%;
+      }
+
       body {
         font-family: 'Poppins', sans-serif;
         background-color: #020202;
         color: #ffffff;
+        font-weight: 400;
         margin: 0;
         overflow-x: hidden;
         min-height: 100vh;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
 
+      /* --- CUSTOM SCROLLBAR UI --- */
       ::-webkit-scrollbar { width: 10px; height: 10px; }
       ::-webkit-scrollbar-track { background: transparent; }
       ::-webkit-scrollbar-thumb {
@@ -68,9 +74,24 @@
         border: 2px solid transparent;
         background-clip: content-box;
       }
-      ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.25); }
+      ::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.25);
+      }
+      ::-webkit-scrollbar-thumb:active {
+        background: rgba(255, 255, 255, 0.4);
+      }
+      ::-webkit-scrollbar-corner { background: transparent; }
 
-      h1, h2, h3, .font-display { font-family: 'Milker', 'Unbounded', 'Syne', sans-serif; }
+      @supports (scrollbar-color: auto) {
+        * {
+          scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+          scrollbar-width: thin;
+        }
+      }
+      
+      h1, h2, h3, .font-display {
+        font-family: 'Milker', 'Unbounded', 'Syne', sans-serif;
+      }
       
       .glass-panel {
         background: rgba(20, 20, 20, 0.6);
@@ -78,6 +99,7 @@
         -webkit-backdrop-filter: blur(16px);
         border: 1px solid rgba(255, 255, 255, 0.08);
         box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        transform: translateZ(0);
       }
       
       .glass-input {
@@ -92,15 +114,44 @@
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
         border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        transform: translateZ(0);
+      }
+      .glass-element:hover {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.15);
       }
       
       .no-scrollbar::-webkit-scrollbar { display: none; }
       .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       
-      @keyframes marquee-up { 0% { transform: translateY(0); } 100% { transform: translateY(-50%); } }
-      @keyframes marquee-down { 0% { transform: translateY(-50%); } 100% { transform: translateY(0); } }
+      @keyframes breathe {
+        0%, 100% { transform: scale(1.1); opacity: 0.2; }
+        50% { transform: scale(1.2); opacity: 0.3; }
+      }
+      .animate-breathe { animation: breathe 10s ease-in-out infinite; }
 
-      .marquee-col { will-change: transform; backface-visibility: hidden; }
+      @keyframes text-reveal {
+        0% { opacity: 0; filter: blur(12px); transform: translateY(10px); }
+        100% { opacity: 1; filter: blur(0); transform: translateY(0); }
+      }
+      .animate-text-reveal {
+        animation: text-reveal 1.2s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+      }
+
+      @keyframes marquee-up {
+        0% { transform: translateY(0) translateZ(0); }
+        100% { transform: translateY(-50%) translateZ(0); }
+      }
+      @keyframes marquee-down {
+        0% { transform: translateY(-50%) translateZ(0); }
+        100% { transform: translateY(0) translateZ(0); }
+      }
+
+      .marquee-col {
+        will-change: transform;
+        backface-visibility: hidden;
+      }
 
       /* ===== COMING SOON WALL ===== */
       .coming-wall {
@@ -108,10 +159,9 @@
         inset: 0;
         background: #020202;
         z-index: 9999;
-        display: flex; /* Visible by default */
+        display: flex;
         flex-direction: column;
         color: white;
-        transition: opacity 0.5s ease-out;
       }
       .cs-header {
         height: 72px;
@@ -153,6 +203,12 @@
         display: flex;
         flex-direction: column;
       }
+      .cs-center p {
+        margin-top: 18px;
+        max-width: 420px;
+        font-size: 14px;
+        opacity: 0.45;
+      }
       .cs-center .coming {
         margin-top: 40px;
         font-size: 11px;
@@ -165,17 +221,28 @@
       (function () {
         const ADMIN_KEY = "wavy_admin";
         const ADMIN_PASSWORD = "uzair2643";
+
         const params = new URLSearchParams(window.location.search);
-        if (params.get("admin") === ADMIN_PASSWORD) {
+        const adminParam = params.get("admin");
+
+        if (adminParam && adminParam === ADMIN_PASSWORD) {
           window.SafeStorage.setItem(ADMIN_KEY, "1");
-          try { window.history.replaceState({}, document.title, window.location.pathname); } catch(e) {}
+          try {
+            window.history.replaceState({}, document.title, window.location.pathname);
+          } catch(e) {}
         }
       })();
     </script>
   </head>
   <body>
 
-    <div id="coming-wall" class="coming-wall">
+    <div id="coming-wall" class="coming-wall" style="display:none;">
+      <script>
+        // FIXED: Using window.SafeStorage
+        if (window.SafeStorage.getItem("wavy_admin") !== "1") {
+          document.getElementById("coming-wall").style.display = "flex";
+        }
+      </script>
       <div class="cs-header">
         <div class="cs-brand">
           <img src="./logo.svg" alt="WavyPrompts Logo" />
@@ -207,34 +274,190 @@
 
       const SUPABASE_URL = 'https://wkxmzwvysahrczxbesgk.supabase.co';
       const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndreG16d3Z5c2FocmN6eGJlc2drIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU3OTUwMTcsImV4cCI6MjA4MTM3MTAxN30.m7GZaKsWT9KhvAU3dR88cSbVwtK1_FTUM1QL4cf8PN0';
+      
       const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-      // --- TOAST PROVIDER ---
+      const REPAIR_SQL = `
+-- 1. RESET PROMPTS TABLE
+create table if not exists public.prompts (
+    id text primary key,
+    title text,
+    prompt text,
+    image_url text,
+    category text default 'NanoBanana',
+    created_at timestamptz default now()
+);
+
+alter table public.prompts add column if not exists category text default 'NanoBanana';
+alter table public.prompts add column if not exists created_at timestamptz default now();
+
+alter table public.prompts enable row level security;
+drop policy if exists "Enable all access" on public.prompts;
+drop policy if exists "Public Access" on public.prompts;
+create policy "Public Access" on public.prompts for all using (true) with check (true);
+grant all on table public.prompts to anon;
+grant all on table public.prompts to authenticated;
+
+insert into storage.buckets (id, name, public) values ('images', 'images', true)
+on conflict (id) do update set public = true;
+
+drop policy if exists "Universal Public Images" on storage.objects;
+drop policy if exists "Give me access" on storage.objects;
+drop policy if exists "Public Access" on storage.objects;
+
+create policy "Universal Public Images" on storage.objects for all 
+using ( bucket_id = 'images' ) 
+with check ( bucket_id = 'images' );
+
+grant all on table storage.objects to anon;
+grant all on table storage.objects to authenticated;
+`.trim();
+
       const ToastContext = createContext(null);
+
       const ToastProvider = ({ children }) => {
         const [toasts, setToasts] = useState([]);
-        const addToast = (message, type = 'success') => {
+
+        const addToast = (message, type = 'success', duration = 5000) => {
           const id = Date.now();
           setToasts(prev => [...prev, { id, message, type }]);
-          setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
+          setTimeout(() => removeToast(id), duration);
         };
+
+        const removeToast = (id) => {
+          setToasts(prev => prev.filter(t => t.id !== id));
+        };
+
         return (
           <ToastContext.Provider value={{ addToast }}>
             {children}
             <div className="fixed bottom-6 left-1/2 -translate-x-1/2 md:translate-x-0 md:left-auto md:bottom-6 md:right-6 z-[200] flex flex-col gap-3 pointer-events-none w-full max-w-[calc(100%-32px)] md:max-w-sm">
               {toasts.map(toast => (
-                <div key={toast.id} className="pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl border backdrop-blur-md shadow-2xl bg-[#1a1a1a]/90 border-white/10 text-white animate-in slide-in-from-bottom-5 fade-in">
-                  <span className="text-[#547EAE]"><CheckCircle2 size={20} /></span>
-                  <p className="text-sm font-medium">{toast.message}</p>
+                <div 
+                  key={toast.id} 
+                  className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl border backdrop-blur-md shadow-2xl animate-in slide-in-from-bottom-full md:slide-in-from-right-full fade-in duration-300 w-full ${
+                    toast.type === 'error' 
+                      ? 'bg-red-500/10 border-red-500/20 text-red-200' 
+                      : 'bg-[#1a1a1a]/90 border-white/10 text-white'
+                  }`}
+                >
+                  <div className={`shrink-0 ${toast.type === 'error' ? 'text-red-400' : 'text-[#547EAE]'}`}>
+                    {toast.type === 'error' ? <XCircle size={20} /> : <CheckCircle2 size={20} />}
+                  </div>
+                  <p className="text-sm font-medium leading-tight">{toast.message}</p>
+                  <button onClick={() => removeToast(toast.id)} className="ml-auto opacity-50 hover:opacity-100 transition-opacity p-1">
+                    <X size={14} />
+                  </button>
                 </div>
               ))}
             </div>
           </ToastContext.Provider>
         );
       };
-      const useToast = () => useContext(ToastContext);
 
-      // --- HERO SECTION ---
+      const useToast = () => {
+        const context = useContext(ToastContext);
+        if (!context) throw new Error("useToast must be used within a ToastProvider");
+        return context;
+      };
+
+      const mapFromDb = (row) => ({
+        id: row.id,
+        title: row.title,
+        prompt: row.prompt,
+        imageUrl: row.image_url,
+        category: row.category,
+        createdAt: row.created_at ? new Date(row.created_at).getTime() : Date.now()
+      });
+
+      const mapToDb = (data) => ({
+        id: data.id,
+        title: data.title,
+        prompt: data.prompt,
+        image_url: data.imageUrl,
+        category: data.category,
+        created_at: new Date(data.createdAt).toISOString()
+      });
+
+      const fetchPrompts = async () => {
+        const { data, error } = await supabase
+          .from('prompts')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        return data.map(mapFromDb);
+      };
+
+      const checkDatabaseHealth = async () => {
+        try {
+          const { data, error } = await supabase.from('prompts').select('id, category').limit(1);
+          if (error) throw error;
+          return { healthy: true };
+        } catch (error) {
+           return { healthy: false, error: error.message };
+        }
+      };
+
+      const uploadImageToSupabase = async (file) => {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        const { data, error: uploadError } = await supabase.storage
+          .from('images')
+          .upload(filePath, file, { cacheControl: '3600', upsert: false });
+
+        if (uploadError) {
+          if (uploadError.statusCode === '403' || uploadError.error === 'Unauthorized' || uploadError.message.includes('row-level security')) {
+            throw new Error("Storage Permission Denied. Run the repair script.");
+          }
+          throw uploadError;
+        }
+
+        const { data: publicUrlData } = supabase.storage.from('images').getPublicUrl(filePath);
+        return publicUrlData.publicUrl;
+      };
+
+      const savePromptToSupabase = async (prompt) => {
+        const dbPayload = mapToDb(prompt);
+        const { error } = await supabase.from('prompts').upsert(dbPayload, { onConflict: 'id' });
+        if (error) throw error;
+      };
+
+      const deletePromptFromSupabase = async (id) => {
+        const { error } = await supabase.from('prompts').delete().eq('id', id);
+        if (error) throw error;
+      };
+
+      const encodeShareData = (data) => {
+        try {
+          const payload = { ...data };
+          const json = JSON.stringify(payload);
+          return btoa(String.fromCharCode(...new TextEncoder().encode(json)));
+        } catch (e) { return ""; }
+      };
+
+      const decodeShareData = (encoded) => {
+        try {
+          const binaryString = atob(encoded);
+          const bytes = Uint8Array.from(binaryString, c => c.charCodeAt(0));
+          return JSON.parse(new TextDecoder().decode(bytes));
+        } catch (e) { return null; }
+      };
+
+      const Button = ({ children, variant = 'primary', fullWidth = false, className = '', ...props }) => {
+        const baseStyles = "inline-flex items-center justify-center transition-all duration-200 font-medium tracking-wide disabled:opacity-50 disabled:cursor-not-allowed select-none active:scale-[0.98]";
+        const variants = {
+          primary: "bg-[#547EAE] hover:bg-[#4a4aff] text-white rounded-full px-6 py-3 shadow-[0_0_20px_-5px_#547EAE]",
+          secondary: "bg-white text-black hover:bg-gray-200 rounded-full px-6 py-3",
+          ghost: "bg-transparent text-white/70 hover:text-white hover:bg-white/10 rounded-lg p-2",
+          icon: "bg-white/10 hover:bg-white/20 text-white rounded-full p-2 backdrop-blur-md",
+          danger: "bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 rounded-full px-4 py-3 border border-red-500/20"
+        };
+        return <button className={`${baseStyles} ${variants[variant]} ${fullWidth ? 'w-full' : ''} ${className}`} {...props}>{children}</button>;
+      };
+
       const HeroSection = ({ prompts }) => {
         const cols = useMemo(() => {
           const pool = prompts && prompts.length > 0 ? prompts : Array.from({length: 8}).fill(null);
@@ -245,14 +468,24 @@
         }, [prompts]);
 
         return (
-          <div className="relative w-full h-[400px] md:h-[480px] rounded-[32px] overflow-hidden mb-12 border border-white/10 shadow-2xl bg-[#0a0a0a]">
+          <div className="relative w-full h-[400px] md:h-[480px] rounded-[32px] overflow-hidden mb-12 border border-white/10 shadow-2xl bg-[#0a0a0a] group hardware-accelerated">
               <div className="absolute inset-[-100px] opacity-70 flex gap-4 justify-center items-start transform -rotate-6 scale-110 pointer-events-none select-none">
                   {cols.map((colItems, colIndex) => (
-                      <div key={colIndex} className="marquee-col flex flex-col gap-4 w-1/3 sm:w-1/4 md:w-1/6 shrink-0"
-                        style={{ animation: `${colIndex % 2 === 0 ? 'marquee-up' : 'marquee-down'} ${40 + (colIndex * 5)}s linear infinite` }}>
-                          {colItems.map((p, i) => (
+                      <div 
+                        key={colIndex} 
+                        className="marquee-col flex flex-col gap-4 w-1/3 sm:w-1/4 md:w-1/6 shrink-0"
+                        style={{
+                            animation: `${colIndex % 2 === 0 ? 'marquee-up' : 'marquee-down'} ${40 + (colIndex * 5)}s linear infinite`
+                        }}
+                      >
+                          {[...colItems, ...colItems].map((p, i) => (
                               <div key={i} className="w-full aspect-[4/5] rounded-xl bg-gray-800/50 overflow-hidden border border-white/5 relative">
-                                 <img src={p ? p.imageUrl : `https://picsum.photos/seed/${colIndex * 100 + i}/400/500`} className="w-full h-full object-cover" loading="lazy" />
+                                 <img 
+                                   src={p ? p.imageUrl : `https://picsum.photos/seed/${colIndex * 100 + i}/400/500`} 
+                                   className="w-full h-full object-cover transition-all duration-700 ease-out" 
+                                   loading="lazy"
+                                   alt=""
+                                 />
                               </div>
                           ))}
                       </div>
@@ -264,53 +497,596 @@
                       <span>STAY WAVY</span>
                       <span className="text-white/90">PROMPT SMARTER</span>
                     </h1>
+                    <p className="text-white/50 text-[10px] md:text-xs font-medium max-w-xs mt-4 tracking-wide">
+                      Discover and collect the best AI prompts in your personal vault.
+                    </p>
               </div>
           </div>
         );
       };
 
-      // --- MAIN APP ---
-      const MainApp = () => {
-        const [prompts, setPrompts] = useState([]);
-        const [view, setView] = useState('gallery');
+      const RepairModal = ({ isOpen, onClose, errorMsg }) => {
+        const [copied, setCopied] = useState(false);
+        if (!isOpen) return null;
 
-        useEffect(() => {
-          // --- WALL LOGIC: Only hide if Admin ---
-          const isAdmin = window.SafeStorage.getItem("wavy_admin") === "1";
-          const isShared = window.location.hash.startsWith('#/share/');
-          
-          if (isAdmin || isShared) {
-            const wall = document.getElementById('coming-wall');
-            if(wall) wall.style.display = 'none'; // Reveal App
-          }
-        }, []);
-
-        useEffect(() => {
-          const fetchPrompts = async () => {
-            const { data } = await supabase.from('prompts').select('*').order('created_at', { ascending: false });
-            if(data) setPrompts(data.map(p => ({...p, imageUrl: p.image_url})));
-          };
-          fetchPrompts();
-        }, []);
+        const handleCopy = () => {
+          navigator.clipboard.writeText(REPAIR_SQL);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        };
 
         return (
-          <div className="min-h-screen relative text-white pt-24 pb-20 px-4 md:px-6 z-10 relative max-w-7xl mx-auto">
-             <HeroSection prompts={prompts} />
-             {/* Simple Prompt Grid */}
-             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {prompts.map(p => (
-                  <div key={p.id} className="aspect-[4/5] bg-gray-800 rounded-xl overflow-hidden border border-white/10">
-                    <img src={p.imageUrl} className="w-full h-full object-cover" />
+          <div className="fixed inset-0 z-[250] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/90 backdrop-blur-sm" />
+            <div className="glass-panel w-full max-w-2xl rounded-3xl p-6 md:p-8 relative animate-in fade-in zoom-in-95 duration-200 border border-red-500/30 shadow-[0_0_50px_-10px_rgba(239,68,68,0.2)]">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="p-3 rounded-full bg-red-500/20 text-red-400"><Database size={24} /></div>
+                <div>
+                  <h2 className="text-xl font-bold font-display text-white">Database Setup Required</h2>
+                  <p className="text-red-300 text-sm">Permission or Schema error detected</p>
+                </div>
+              </div>
+              
+              <div className="bg-black/40 rounded-xl p-4 mb-6 border border-white/10">
+                <code className="text-red-300 text-xs break-all">{errorMsg}</code>
+              </div>
+
+              <div className="relative group mb-6">
+                <pre className="bg-[#050505] p-4 rounded-xl text-xs text-gray-400 font-mono overflow-x-auto h-48 border border-white/10">
+                  {REPAIR_SQL}
+                </pre>
+                <button onClick={handleCopy} className="absolute top-2 right-2 px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-white text-xs font-bold transition-colors flex items-center gap-2 backdrop-blur-md">
+                  {copied ? <Check size={14} /> : <Copy size={14} />}
+                  {copied ? 'Copied' : 'Copy SQL'}
+                </button>
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <Button variant="ghost" onClick={onClose}>Ignore</Button>
+                <Button onClick={() => window.location.reload()} variant="primary">Reload App</Button>
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      const PromptCard = ({ data, onClick, onEdit }) => {
+        const [copied, setCopied] = useState(false);
+        const category = data.category || 'NanoBanana';
+        const { addToast } = useToast();
+
+        const handleShare = (e) => {
+          e.stopPropagation();
+          const encoded = encodeShareData(data);
+          if (!encoded) return;
+          const url = `${window.location.origin}${window.location.pathname}#/share/${encoded}`;
+          navigator.clipboard.writeText(url).then(() => {
+            setCopied(true);
+            addToast("Link copied!");
+            setTimeout(() => setCopied(false), 2000);
+          });
+        };
+
+        const getDotColor = (c) => {
+          switch(c) {
+            case 'NanoBanana': return 'bg-[#FFD700] shadow-[0_0_8px_rgba(255,215,0,0.5)]';
+            case 'CHATGPT': return 'bg-[#00A67E] shadow-[0_0_8px_rgba(0,166,126,0.5)]';
+            case 'Midjourney': return 'bg-[#00BFFF] shadow-[0_0_8px_rgba(0,191,255,0.5)]';
+            default: return 'bg-white';
+          }
+        };
+
+        return (
+          <div onClick={onClick} className="group cursor-pointer flex flex-col gap-4 active:scale-[0.98] transition-transform duration-200">
+            <div className="relative w-full aspect-[4/5] rounded-[24px] md:rounded-[32px] overflow-hidden border border-white/5 bg-[#050505] z-10 shadow-2xl ring-1 ring-white/5 group-hover:ring-white/10 transition-all duration-500">
+              {data.imageUrl ? (
+                <img src={data.imageUrl} alt={data.title} className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]" loading="lazy" />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center text-white/20 bg-white/5"><ImageIcon size={48} /></div>
+              )}
+            </div>
+            <div className="flex flex-col gap-2">
+              <h3 className="text-lg md:text-xl font-extrabold font-display text-white tracking-tight truncate px-1">{data.title}</h3>
+              <div className="flex items-center justify-between gap-3 px-1 w-full">
+                <div className="glass-element flex items-center gap-2 px-2.5 py-1.5 md:px-3 md:py-2 rounded-full transition-all duration-300 hover:bg-white/10 border border-white/10">
+                  <div className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full flex-shrink-0 ${getDotColor(category)}`}></div>
+                  <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-white/90 font-display whitespace-nowrap">{category}</span>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <button onClick={(e) => {e.stopPropagation(); onEdit();}} className="glass-element w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-all border border-white/10 active:bg-white/20"><Pencil size={15} /></button>
+                  <button onClick={handleShare} className={`glass-element w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full transition-all border border-white/10 active:bg-white/20 ${copied ? 'bg-white text-black' : 'text-white/70 hover:text-white'}`}>{copied ? <Check size={16} /> : <Share2 size={16} />}</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      const AddModal = ({ isOpen, onClose, onSave, onDelete, initialData }) => {
+        const [title, setTitle] = useState('');
+        const [prompt, setPrompt] = useState('');
+        const [imageMode, setImageMode] = useState('upload');
+        const [imageUrl, setImageUrl] = useState('');
+        const [selectedFile, setSelectedFile] = useState(null);
+        const [previewUrl, setPreviewUrl] = useState('');
+        const [category, setCategory] = useState('NanoBanana');
+        const [isSaving, setIsSaving] = useState(false);
+        const [savingStatus, setSavingStatus] = useState('idle');
+        const [isDeleting, setIsDeleting] = useState(false);
+        const fileInputRef = useRef(null);
+        const { addToast } = useToast();
+
+        useEffect(() => {
+          if (isOpen) {
+            setSavingStatus('idle');
+            if (initialData) {
+              setTitle(initialData.title);
+              setPrompt(initialData.prompt);
+              setImageUrl(initialData.imageUrl);
+              setPreviewUrl(initialData.imageUrl);
+              setImageMode('link');
+              setCategory(initialData.category || 'NanoBanana');
+            } else {
+              setTitle('');
+              setPrompt('');
+              setImageUrl('');
+              setPreviewUrl('');
+              setImageMode('upload');
+              setCategory('NanoBanana');
+            }
+            setSelectedFile(null);
+          }
+        }, [isOpen, initialData]);
+
+        const handleFileChange = (e) => {
+          const file = e.target.files[0];
+          if (file) {
+            setSelectedFile(file);
+            setPreviewUrl(URL.createObjectURL(file));
+          }
+        };
+
+        if (!isOpen) return null;
+
+        const handleSubmit = async (e) => {
+          e.preventDefault();
+          if (isSaving) return;
+          setIsSaving(true);
+          setSavingStatus('starting');
+          
+          try {
+            const baseData = {
+              id: initialData ? initialData.id : Date.now().toString(),
+              title,
+              prompt,
+              imageUrl: imageMode === 'link' ? imageUrl : (initialData?.imageUrl || 'https://picsum.photos/800/1000'),
+              category,
+              createdAt: initialData ? initialData.createdAt : Date.now()
+            };
+
+            const fileToUpload = (imageMode === 'upload' && selectedFile) ? selectedFile : null;
+
+            await onSave(baseData, fileToUpload, (status) => setSavingStatus(status));
+            
+            addToast(initialData ? "Vault entry updated!" : "Saved to Vault!");
+            onClose();
+          } catch (err) {
+             console.error("Modal caught error:", err);
+             addToast(err.message || "Failed to save.", "error");
+          } finally {
+            setIsSaving(false);
+            setSavingStatus('idle');
+          }
+        };
+
+        return (
+          <div className="fixed inset-0 z-[150] flex items-end md:items-center justify-center sm:p-4">
+            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
+            <div data-lenis-prevent className="glass-panel w-full md:max-w-lg max-h-[95vh] md:max-h-[90vh] overflow-y-auto rounded-t-3xl md:rounded-3xl p-6 md:p-8 relative animate-in slide-in-from-bottom-full md:slide-in-from-bottom-10 fade-in zoom-in-95 duration-300">
+              <button onClick={onClose} className="absolute top-4 right-4 p-2 text-white/50 hover:text-white transition-colors z-10"><X size={24} /></button>
+              
+              <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6 md:hidden"></div>
+
+              <h2 className="text-xl md:text-2xl font-bold font-display mb-6 bg-gradient-to-r from-white to-white/50 bg-clip-text text-transparent">{initialData ? 'Edit Prompt' : 'Add to Vault'}</h2>
+              <form onSubmit={handleSubmit} className="space-y-5 pb-safe-bottom">
+                <div className="space-y-2"><label className="text-sm text-white/60 font-medium ml-1">Title</label><input required type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Cyberpunk Cat" className="glass-input w-full rounded-xl px-4 py-3 focus:outline-none focus:border-[#547EAE]/50 transition-colors text-[16px] md:text-sm" /></div>
+                
+                <div className="space-y-2">
+                  <label className="text-sm text-white/60 font-medium ml-1">Category</label>
+                  <div className="flex gap-2 flex-wrap">
+                    {['NanoBanana', 'CHATGPT', 'Midjourney'].map((cat) => {
+                       const isSelected = category === cat;
+                       let activeClass = isSelected ? (cat === 'NanoBanana' ? 'bg-yellow-400 border-yellow-400 text-black' : cat === 'CHATGPT' ? 'bg-[#00A67E] border-[#00A67E] text-white' : 'bg-blue-400 border-blue-400 text-black') : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10';
+                       return <button key={cat} type="button" onClick={() => setCategory(cat)} className={`px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border ${activeClass}`}>{cat}</button>;
+                    })}
                   </div>
-                ))}
+                </div>
+
+                <div className="space-y-3">
+                  <label className="text-sm text-white/60 font-medium ml-1">Image (4:5)</label>
+                  <div className="flex gap-2 mb-2"><button type="button" onClick={() => setImageMode('upload')} className={`text-xs font-bold px-3 py-1.5 rounded-lg ${imageMode === 'upload' ? 'bg-[#547EAE] text-white' : 'text-white/50'}`}>Upload</button><button type="button" onClick={() => setImageMode('link')} className={`text-xs font-bold px-3 py-1.5 rounded-lg ${imageMode === 'link' ? 'bg-[#547EAE] text-white' : 'text-white/50'}`}>URL</button></div>
+                  {imageMode === 'upload' ? (
+                     <div onClick={() => fileInputRef.current?.click()} className="group relative w-full aspect-[4/5] max-h-[200px] rounded-xl border-2 border-dashed border-white/10 hover:border-[#547EAE]/50 bg-white/5 flex flex-col items-center justify-center cursor-pointer overflow-hidden active:scale-[0.99] transition-transform">
+                       {previewUrl ? <img src={previewUrl} className="w-full h-full object-cover opacity-60" /> : <div className="flex flex-col items-center"><Upload size={24} /><span className="text-xs font-bold mt-2">Click to Upload</span></div>}
+                       <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+                     </div>
+                  ) : (
+                    <input type="url" value={imageUrl} onChange={(e) => { setImageUrl(e.target.value); setPreviewUrl(e.target.value); }} placeholder="https://..." className="glass-input w-full rounded-xl px-4 py-3 text-[16px] md:text-sm" />
+                  )}
+                </div>
+
+                <div className="space-y-2"><label className="text-sm text-white/60 font-medium ml-1">Prompt</label><textarea required value={prompt} onChange={(e) => setPrompt(e.target.value)} rows={5} className="glass-input w-full rounded-xl px-4 py-3 focus:outline-none focus:border-[#547EAE]/50 resize-none text-[16px] md:text-sm" /></div>
+                
+                <div className="flex gap-3 mt-4">
+                  {initialData && <Button type="button" variant="danger" onClick={async () => { if(confirm('Delete?')) { setIsDeleting(true); await onDelete(initialData.id).catch(() => {}); onClose(); } }} disabled={isDeleting} className="w-12 px-0"><Trash2 size={20} /></Button>}
+                  <Button type="submit" fullWidth disabled={isSaving}>
+                    {isSaving ? (
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="animate-spin" size={18} />
+                        <span>
+                           {savingStatus === 'uploading' && 'Uploading Image...'}
+                           {savingStatus === 'saving' && 'Saving Data...'}
+                           {savingStatus === 'syncing' && 'Syncing Vault...'}
+                           {savingStatus === 'starting' && 'Processing...'}
+                        </span>
+                      </div>
+                    ) : (initialData ? 'Update Vault' : 'Save to Vault')}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        );
+      };
+
+      const FullView = ({ data, isOwner, onBack, onEdit, showBack = true }) => {
+        const [copied, setCopied] = useState(false);
+        const { addToast } = useToast();
+
+        const getDotColor = (c) => {
+          switch(c) {
+            case 'NanoBanana': return 'bg-[#FFD700] shadow-[0_0_8px_rgba(255,215,0,0.5)]';
+            case 'CHATGPT': return 'bg-[#00A67E] shadow-[0_0_8px_rgba(0,166,126,0.5)]';
+            case 'Midjourney': return 'bg-[#00BFFF] shadow-[0_0_8px_rgba(0,191,255,0.5)]';
+            default: return 'bg-white';
+          }
+        };
+
+        const handleCopy = () => {
+          navigator.clipboard.writeText(data.prompt);
+          setCopied(true);
+          addToast("Copied!");
+          setTimeout(() => setCopied(false), 2000);
+        };
+
+        return (
+          <div data-lenis-prevent className="fixed inset-0 z-[100] bg-black text-white overflow-y-auto">
+             <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between p-4 md:p-6 pointer-events-none pt-[calc(1rem+env(safe-area-inset-top))]">
+                
+                {showBack ? (
+                  <button 
+                    onClick={onBack} 
+                    className="pointer-events-auto p-3 rounded-full bg-black/40 backdrop-blur-xl border border-white/10 hover:bg-black/60 transition-all active:scale-90 shadow-2xl"
+                  >
+                    <ChevronLeft size={24} />
+                  </button>
+                ) : <div></div>}
+                
+                {isOwner && (
+                  <button 
+                    onClick={onEdit} 
+                    className="pointer-events-auto p-3 rounded-full bg-black/40 backdrop-blur-xl border border-white/10 hover:bg-black/60 text-white/70 hover:text-white transition-all active:scale-90 shadow-2xl"
+                  >
+                    <Pencil size={20} />
+                  </button>
+                )}
+             </div>
+
+             <div className="max-w-xl mx-auto px-4 pb-[calc(8rem+env(safe-area-inset-bottom))] pt-20 md:pt-24 flex flex-col items-center w-full">
+                <div className="relative w-full aspect-[4/5] rounded-[24px] md:rounded-[32px] overflow-hidden bg-[#111] border border-white/10 shadow-2xl mb-6 md:mb-8">
+                  <img src={data.imageUrl} className="w-full h-full object-cover" />
+                </div>
+                <div className="w-full flex flex-col gap-4 md:gap-5 px-1 min-w-0">
+                   <h1 className="text-2xl md:text-4xl font-black font-display text-white leading-tight tracking-tight text-left break-all">{data.title}</h1>
+                   <div className="flex wrap items-center gap-3">
+                      <div className="glass-element flex items-center gap-2 px-3 py-2 rounded-full border border-white/10">
+                          <div className={`w-2 h-2 rounded-full flex-shrink-0 ${getDotColor(data.category || 'NanoBanana')}`}></div>
+                          <span className="text-xs font-bold uppercase tracking-widest text-white/90 font-display whitespace-nowrap">{data.category || 'NanoBanana'}</span>
+                      </div>
+                   </div>
+                   <div className="w-full bg-[#161616] border border-white/10 rounded-2xl p-5 md:p-6 mt-2 relative min-w-0 overflow-hidden">
+                      <p className="text-sm md:text-base text-gray-300 font-medium leading-relaxed whitespace-pre-wrap select-text break-all">
+                        {data.prompt}
+                      </p>
+                   </div>
+                </div>
+             </div>
+
+             <div className="fixed bottom-0 left-0 right-0 p-4 md:p-6 bg-gradient-to-t from-black via-black to-transparent z-50 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+                <div className="max-w-xl mx-auto flex gap-4">
+                   <Button onClick={handleCopy} fullWidth variant="primary" className="h-14 text-base font-bold shadow-lg shadow-[#547EAE]/30 rounded-full hover:scale-[1.02] active:scale-95 transition-transform">
+                      {copied ? 'Copied!' : 'Copy prompt'}
+                   </Button>
+                   <a
+                     href="https://www.instagram.com/wavyprompts/"
+                     target="_blank"
+                     rel="noopener noreferrer"
+                     className="shrink-0 w-14 h-14 rounded-[16px] glass-element flex items-center justify-center border border-white/10 hover:bg-white/10 transition-all active:scale-90 shadow-lg shadow-black/50 p-0 overflow-hidden"
+                   >
+                     <img src="./logo.svg" alt="WavyPrompts Instagram" className="w-full h-full drop-shadow-md object-cover" />
+                   </a>
+                </div>
              </div>
           </div>
         );
       };
 
-      const App = () => <ToastProvider><MainApp /></ToastProvider>;
+      const MainApp = () => {
+        const [sharedData, setSharedData] = useState(() => {
+          const hash = window.location.hash;
+          if (hash.startsWith('#/share/')) {
+            return decodeShareData(hash.split('#/share/')[1]);
+          }
+          return null;
+        });
+
+        const [view, setView] = useState(() => {
+          const hash = window.location.hash;
+          if (hash.startsWith('#/share/') && decodeShareData(hash.split('#/share/')[1])) {
+            return 'shared';
+          }
+          return 'gallery';
+        });
+
+        const [prompts, setPrompts] = useState([]);
+        const [loading, setLoading] = useState(true);
+        const [error, setError] = useState(null);
+        const [dbError, setDbError] = useState(null);
+        const [selectedPrompt, setSelectedPrompt] = useState(null);
+        
+        const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+        const [editingPrompt, setEditingPrompt] = useState(null);
+        
+        const [activeCategory, setActiveCategory] = useState('All');
+        const [searchQuery, setSearchQuery] = useState('');
+        
+        const { addToast } = useToast();
+
+        const themeColors = useMemo(() => ({
+          'All': '#547EAE', 
+          'NanoBanana': '#FFD700', 
+          'CHATGPT': '#00A67E', 
+          'Midjourney': '#00BFFF'
+        }), []);
+        
+        const currentTheme = themeColors[activeCategory] || '#547EAE';
+
+        useEffect(() => {
+          const init = async () => {
+            setLoading(true);
+            const health = await checkDatabaseHealth();
+            if (!health.healthy) setDbError(health.error); 
+
+            try {
+              const data = await fetchPrompts();
+              setPrompts(data);
+              checkHash(data);
+            } catch (err) {
+               if (health.healthy) setError(err.message);
+            } finally {
+              setLoading(false);
+            }
+          };
+
+          const checkHash = (currentPrompts) => {
+            const hash = window.location.hash;
+            if (hash.startsWith('#/share/')) {
+              const decoded = decodeShareData(hash.split('#/share/')[1]);
+              if (decoded) { setSharedData(decoded); setView('shared'); } 
+            } else if (hash.startsWith('#/view/')) {
+              const id = hash.split('#/view/')[1];
+              const found = currentPrompts.find(p => p.id === id);
+              if (found) { setSelectedPrompt(found); setView('full'); }
+            }
+          };
+
+          init();
+
+          const lenis = new Lenis({ duration: 1.2, smoothWheel: true });
+          function raf(time) { lenis.raf(time); requestAnimationFrame(raf); }
+          requestAnimationFrame(raf);
+          return () => lenis.destroy();
+        }, []);
+
+        const handleSave = async (promptData, imageFile, onStatusUpdate) => { 
+          try {
+            let finalImageUrl = promptData.imageUrl;
+            if (imageFile) {
+                  if (onStatusUpdate) onStatusUpdate('uploading');
+                  finalImageUrl = await uploadImageToSupabase(imageFile);
+            }
+            if (onStatusUpdate) onStatusUpdate('saving');
+            await savePromptToSupabase({ ...promptData, imageUrl: finalImageUrl });
+            if (onStatusUpdate) onStatusUpdate('syncing');
+            const data = await fetchPrompts(); 
+            setPrompts(data); 
+          } catch (err) {
+              console.error(err);
+              setDbError(err.message);
+              throw err; 
+          }
+        };
+
+        const handleDelete = async (id) => { 
+          try {
+              await deletePromptFromSupabase(id); 
+              const data = await fetchPrompts(); 
+              setPrompts(data); 
+          } catch (err) {
+              console.error(err);
+              throw err;
+          }
+        };
+
+        const filtered = useMemo(() => {
+          return prompts.filter(p => (activeCategory === 'All' || (p.category || 'NanoBanana') === activeCategory) && (p.title.toLowerCase().includes(searchQuery.toLowerCase())));
+        }, [prompts, activeCategory, searchQuery]);
+
+        return (
+          <div className="min-h-screen relative text-white selection:text-white">
+            <style>{`::selection { background-color: ${currentTheme}; color: black; }`}</style>
+
+            <RepairModal isOpen={!!dbError} onClose={() => setDbError(null)} errorMsg={dbError} />
+
+            <div className="fixed inset-0 z-[-1] bg-[#020202] transition-colors duration-700 pointer-events-none">
+              <div 
+                    className="absolute top-[-20%] left-[-20%] w-[80vw] h-[80vw] blur-[120px] transition-all duration-1000 ease-in-out will-change-[background-color,opacity]" 
+                    style={{ backgroundColor: currentTheme, opacity: 0.04, transform: 'translateZ(0)' }}
+              />
+              <div 
+                    className="absolute bottom-[-20%] right-[-20%] w-[80vw] h-[80vw] blur-[120px] transition-all duration-1000 ease-in-out will-change-[background-color,opacity]" 
+                    style={{ backgroundColor: currentTheme, opacity: 0.02, transform: 'translateZ(0)' }}
+              />
+            </div>
+
+            {view === 'shared' && sharedData ? 
+              <FullView 
+                data={sharedData} 
+                isOwner={false} 
+                showBack={false} 
+                onBack={() => { window.location.hash = ''; setView('gallery'); }} 
+              /> 
+            : view === 'full' && selectedPrompt ? 
+              <>
+                <FullView 
+                  data={selectedPrompt} 
+                  isOwner={true} 
+                  showBack={true}
+                  onBack={() => {window.location.hash=''; setView('gallery');}} 
+                  onEdit={() => { setEditingPrompt(selectedPrompt); setIsAddModalOpen(true); }} 
+                />
+                <AddModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} onSave={handleSave} onDelete={handleDelete} initialData={editingPrompt} />
+              </> 
+            : (
+              <>
+                <header className="fixed top-0 left-0 right-0 z-40 flex justify-center pointer-events-none px-4 pt-[calc(1rem+env(safe-area-inset-top))] md:pt-6">
+                  <div className="pointer-events-auto w-full max-w-6xl bg-black/40 backdrop-blur-[32px] saturate-150 border border-white/10 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.6)] rounded-full py-3 px-2 pl-3 md:pl-4 pr-2 md:pr-2 flex items-center justify-between transition-all duration-500 hover:bg-black/60 hover:border-white/20 ring-1 ring-white/5 group">
+                    
+                    <div className="flex-1 flex items-center justify-start gap-3 md:gap-4 min-w-0">
+                      <img src="./logo.svg" alt="Logo" className="w-10 h-10 group-hover:scale-110 transition-transform duration-300 drop-shadow-lg" />
+                      <h1 className="hidden lg:block text-xl md:text-2xl font-extrabold tracking-tighter text-white truncate" style={{ fontFamily: 'Unbounded, sans-serif' }}>
+                        Wavy<span style={{ color: '#547EAE' }}>Prompts</span>
+                      </h1>
+                    </div>
+
+                    <nav className="flex justify-center items-center overflow-hidden mx-2 md:mx-4 shrink-0">
+                      <div className="flex items-center gap-1 md:gap-2 overflow-x-auto no-scrollbar mask-fade px-2 py-1">
+                        {[
+                          { id: 'All', label: 'Home' },
+                          { id: 'NanoBanana', label: 'NanoBanana' },
+                          { id: 'CHATGPT', label: 'CHATGPT' },
+                          { id: 'Midjourney', label: 'Midjourney' }
+                        ].map((item) => {
+                           const isActive = activeCategory === item.id;
+                           return (
+                             <button
+                               key={item.id}
+                               onClick={() => setActiveCategory(item.id)}
+                               className={`px-3 py-1.5 md:px-4 md:py-2 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-widest transition-all duration-300 whitespace-nowrap ${isActive ? 'shadow-[0_0_15px_rgba(0,0,0,0.3)] text-black' : 'hover:bg-white/5 text-white/50 hover:text-white'}`}
+                               style={isActive ? { backgroundColor: currentTheme, color: '#000000', boxShadow: `0 0 15px ${currentTheme}60` } : {}}
+                             >
+                               {item.label}
+                             </button>
+                           );
+                        })}
+                      </div>
+                    </nav>
+
+                    <div className="flex-1 flex items-center justify-end min-w-0">
+                      <button onClick={() => { setEditingPrompt(null); setIsAddModalOpen(true); }} className="flex items-center gap-2 px-5 py-3 rounded-full bg-white text-black font-bold text-xs uppercase tracking-wider hover:bg-[#547EAE] hover:text-white transition-all shadow-[0_0_20px_-5px_rgba(255,255,255,0.3)] active:scale-95 active:bg-[#547EAE] active:text-white whitespace-nowrap">
+                        <Plus size={16} strokeWidth={3} />
+                        <span className="hidden md:inline">ADD PROMPT</span>
+                        <span className="md:hidden">ADD</span>
+                      </button>
+                    </div>
+                  </div>
+                </header>
+
+                <main className="pt-24 md:pt-28 pb-20 px-4 md:px-6 z-10 relative max-w-7xl mx-auto">
+                  <HeroSection prompts={prompts} />
+
+                  <div className="mb-8 md:mb-10 max-w-2xl mx-auto w-full">
+                    <div className="relative w-full group">
+                      <Search size={16} className="absolute left-4 top-3 text-white/30" />
+                      <input 
+                        type="text" 
+                        value={searchQuery} 
+                        onChange={(e) => setSearchQuery(e.target.value)} 
+                        placeholder={`Search ${activeCategory === 'All' ? 'all' : activeCategory} prompts...`} 
+                        className="w-full bg-white/5 border border-white/10 text-white rounded-full pl-10 pr-4 py-3 text-sm focus:outline-none focus:bg-white/10 transition-all shadow-lg" 
+                      />
+                    </div>
+                  </div>
+
+                  {loading ? (
+                    <div className="flex flex-col items-center justify-center py-20">
+                      <Loader2 size={40} className="animate-spin mb-4" style={{ color: currentTheme }} />
+                      <p className="text-white/50 text-sm font-display tracking-widest uppercase">Syncing Vault...</p>
+                    </div>
+                  ) : filtered.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-20 text-center">
+                      <div className="w-24 h-24 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-6"><Plus size={28} className="text-white/20" /></div>
+                      <h2 className="text-xl font-display text-white/80 mb-2">Vault Empty</h2>
+                      <p className="text-white/40 max-w-xs mx-auto mb-8">Start your collection by adding your first prompt.</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                      {filtered.map((prompt) => (
+                        <PromptCard 
+                          key={prompt.id} 
+                          data={prompt} 
+                          onClick={() => { window.location.hash = `#/view/${prompt.id}`; setSelectedPrompt(prompt); setView('full'); }} 
+                          onEdit={() => { setEditingPrompt(prompt); setIsAddModalOpen(true); }} 
+                        />
+                      ))}
+                    </div>
+                  )}
+                </main>
+                <AddModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} onSave={handleSave} onDelete={handleDelete} initialData={editingPrompt} />
+              </>
+            )}
+          </div>
+        );
+      };
+
+      const App = () => {
+        return (
+          <ToastProvider>
+            <MainApp />
+          </ToastProvider>
+        );
+      };
+
       const root = ReactDOM.createRoot(document.getElementById('root'));
       root.render(<App />);
+    </script>
+    <script>
+      (function () {
+        const wall = document.getElementById("coming-wall");
+        function updateWall() {
+          // SAFE STORAGE WRAPPER
+          const isAdmin = window.SafeStorage.getItem("wavy_admin") === "1";
+          const hash = window.location.hash || "";
+          const isSharedLink = hash.startsWith("#/share/");
+          if (isAdmin || isSharedLink) {
+            wall.style.display = "none";
+          } else {
+            wall.style.display = "flex";
+          }
+        }
+        updateWall();
+        window.addEventListener("hashchange", updateWall);
+      })();
     </script>
   </body>
 </html>
